@@ -1,0 +1,4 @@
+# Spring Test ContextCustomizerFactories
+org.springframework.test.context.ContextCustomizerFactory=\
+com.rbkmoney.testcontainers.annotations.postgresql.PostgresqlTestcontainerExtension.PostgresqlTestcontainerContextCustomizerFactory,\
+com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainerExtension.KafkaTestcontainerContextCustomizerFactory
