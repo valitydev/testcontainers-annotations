@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.rbkmoney</groupId>
+        <artifactId>library-parent-pom</artifactId>
+        <version>1.0.3</version>
+    </parent>
+
+    <packaging>jar</packaging>
+
+    <artifactId>testcontainers-annotations</artifactId>
+    <version>0.0.1111</version>
+    <url>https://github.com/rbkmoney/testcontainers-annotations</url>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <organization>RBK.money</organization>
+            <organizationUrl>https://rbk.money</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/rbkmoney/testcontainers-annotations.git</connection>
+        <developerConnection>scm:git:ssh://github.com/rbkmoney/testcontainers-annotations.git</developerConnection>
+        <url>https://github.com/rbkmoney/testcontainers-annotations/tree/master</url>
+    </scm>
+
+    <properties>
+        <kafka-common-lib.version>0.1.8</kafka-common-lib.version>
+        <woody.version>[1.1.22,)</woody.version>
+        <spring-boot.version>2.5.0</spring-boot.version>
+        <lombok.version>1.18.16</lombok.version>
+        <testcontainers.version>1.15.3</testcontainers.version>
+        <junit-jupiter.version>5.7.2</junit-jupiter.version>
+        <checkstyle.config.suppressions.path>./src/main/resources/checkstyle/checkstyle-suppressions.xml
+        </checkstyle.config.suppressions.path>
+    </properties>
+
+    <dependencies>
+        <!--rbkmoney-->
+        <dependency>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>kafka-common-lib</artifactId>
+            <version>${kafka-common-lib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney.woody</groupId>
+            <artifactId>woody-thrift</artifactId>
+            <version>${woody.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>payout-manager-proto</artifactId>
+            <version>1.17-8aa3eb8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>machinegun-proto</artifactId>
+            <version>1.18-d814d69</version>
+        </dependency>
+
+        <!--spring-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+
+        <!--third party-->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>kafka</artifactId>
+            <version>${testcontainers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit-jupiter.version}</version>
+        </dependency>
+    </dependencies>
+</project>
