@@ -26,6 +26,19 @@
 @KafkaTestcontainer
 ```
 
+Также, для изменения тега образа докера, который используется [TestContainers](https://github.com/testcontainers/testcontainers-java) нужно переопределить параметры в `application.yml`:
+
+```yml
+testcontainers:
+  postgresql:
+    tag: '12'
+  kafka:
+    tag: '6.2.0'
+```
+
+если данные проперти не указаны, но библиотека будет использовать параметры по умолчанию, указанные в проекте в файле [`testcontainers-annotations.yml`](https://github.com/rbkmoney/testcontainers-annotations/blob/master/src/main/resources/testcontainers-annotations.yml)
+
+
 Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован под капотом аннотаций
 
 <details>
