@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <artifactId>testcontainers-annotations</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <url>https://github.com/rbkmoney/testcontainers-annotations</url>
 
     <licenses>
@@ -40,7 +40,7 @@
         <woody.version>[1.1.22,)</woody.version>
         <spring-boot.version>2.5.0</spring-boot.version>
         <lombok.version>1.18.16</lombok.version>
-        <testcontainers.version>1.15.3</testcontainers.version>
+        <testcontainers.version>1.16.0</testcontainers.version>
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
         <checkstyle.config.suppressions.path>./src/main/resources/checkstyle/checkstyle-suppressions.xml
         </checkstyle.config.suppressions.path>
@@ -97,6 +97,10 @@
                     <groupId>junit</groupId>
                     <artifactId>junit</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons:</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -129,6 +133,11 @@
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
             <version>2.4.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
         </dependency>
     </dependencies>
 </project>
