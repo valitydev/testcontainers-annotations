@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <artifactId>testcontainers-annotations</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <url>https://github.com/rbkmoney/testcontainers-annotations</url>
 
     <licenses>
@@ -68,6 +68,16 @@
             <artifactId>machinegun-proto</artifactId>
             <version>1.18-d814d69</version>
         </dependency>
+        <dependency>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>fraudbusters-proto</artifactId>
+            <version>1.92-cb27835</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney</groupId>
+            <artifactId>clickhouse-test</artifactId>
+            <version>0.0.1</version>
+        </dependency>
 
         <!--spring-->
         <dependency>
@@ -111,6 +121,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>kafka</artifactId>
+            <version>${testcontainers.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>clickhouse</artifactId>
             <version>${testcontainers.version}</version>
         </dependency>
         <dependency>

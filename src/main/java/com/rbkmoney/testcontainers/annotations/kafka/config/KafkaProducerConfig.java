@@ -1,5 +1,6 @@
 package com.rbkmoney.testcontainers.annotations.kafka.config;
 
+import com.rbkmoney.damsel.fraudbusters.Command;
 import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
 import com.rbkmoney.machinegun.eventsink.SinkEvent;
 import com.rbkmoney.payout.manager.Event;
@@ -22,6 +23,11 @@ public class KafkaProducerConfig {
 
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapAddress;
+
+    @Bean
+    public KafkaTemplate<String, Command> testCommandProducer() {
+        return new KafkaTemplate<>(thriftProducerFactory());
+    }
 
     @Bean
     public KafkaTemplate<String, SinkEvent> testSinkEventProducer() {

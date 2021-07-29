@@ -3,3 +3,5 @@ testcontainers:
     tag: '12'
   kafka:
     tag: '6.2.0'
+  clickhouse:
+    tag: 'latest-alpine'
