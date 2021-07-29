@@ -1,4 +1,4 @@
-package com.rbkmoney.testcontainers.annotations.postgresql;
+package com.rbkmoney.testcontainers.annotations.kafka;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -9,12 +9,17 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(PostgresqlTestcontainerExtension.class)
-public @interface PostgresqlTestcontainer {
+@ExtendWith(KafkaTestcontainerExtension.class)
+public @interface KafkaTestcontainerSingleton {
 
     /**
-     * properties = {"postgresql.make.happy=true",...}
+     * properties = {"kafka.topics.invoicing.consume.enabled=true",...}
      */
     String[] properties() default {};
+
+    /**
+     * topicsKeys = {"kafka.topics.invoicing.id",...}
+     */
+    String[] topicsKeys();
 
 }

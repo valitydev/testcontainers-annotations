@@ -1,6 +1,7 @@
 package com.rbkmoney.testcontainers.annotations.kafka;
 
 import com.rbkmoney.testcontainers.annotations.exception.KafkaStartingException;
+import com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -12,11 +13,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
 import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.lifecycle.Startables;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,7 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadFromSpringApplicationPropertiesFile;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,75 +40,69 @@ public class KafkaTestcontainerExtension
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
+        var annotation = findKafkaTestcontainerSingletonAnnotation(context);
         if (!annotation.isPresent()) {
             return;
         }
-        var kafkaTestcontainer = annotation.get();
-        if (kafkaTestcontainer.instanceMode() == KafkaTestcontainer.InstanceMode.SINGLETON) {
-            var container = KafkaTestcontainerFactory.singletonContainer();
-            if (!container.isRunning()) {
-                startContainer(kafkaTestcontainer, container);
-            }
-            THREAD_CONTAINER.set(container);
+        var container = KafkaTestcontainerFactory.singletonContainer();
+        if (!container.isRunning()) {
+            startContainer(container, annotation.get().topicsKeys());
         }
+        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
+        var annotation = findKafkaTestcontainerAnnotation(context);
         if (!annotation.isPresent()) {
             return;
         }
-        var kafkaTestcontainer = annotation.get();
-        if (kafkaTestcontainer.instanceMode() == KafkaTestcontainer.InstanceMode.DEFAULT) {
-            var container = KafkaTestcontainerFactory.container();
-            if (!container.isRunning()) {
-                startContainer(kafkaTestcontainer, container);
-            }
-            THREAD_CONTAINER.set(container);
+        var container = KafkaTestcontainerFactory.container();
+        if (!container.isRunning()) {
+            startContainer(container, annotation.get().topicsKeys());
         }
+        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var kafkaTestcontainer = annotation.get();
-        if (kafkaTestcontainer.instanceMode() == KafkaTestcontainer.InstanceMode.DEFAULT) {
+        if (findKafkaTestcontainerAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
+            THREAD_CONTAINER.remove();
+        } else if (findKafkaTestcontainerSingletonAnnotation(context).isPresent()) {
+            THREAD_CONTAINER.remove();
         }
-        THREAD_CONTAINER.remove();
     }
 
-    private static Optional<KafkaTestcontainer> findCurrentAnnotation(Class<?> testClass) {
-        return AnnotationSupport.findAnnotation(testClass, KafkaTestcontainer.class);
-    }
-
-    private Optional<KafkaTestcontainer> findCurrentAnnotation(ExtensionContext context) {
+    private static Optional<KafkaTestcontainer> findKafkaTestcontainerAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainer.class);
     }
 
-    private void startContainer(KafkaTestcontainer kafkaTestcontainer, KafkaContainer container) {
-        startContainer(container);
-        var topics = loadFromSpringApplicationPropertiesFile(Arrays.asList(kafkaTestcontainer.topicsKeys()))
+    private static Optional<KafkaTestcontainer> findKafkaTestcontainerAnnotation(Class<?> testClass) {
+        return AnnotationSupport.findAnnotation(testClass, KafkaTestcontainer.class);
+    }
+
+    private static Optional<KafkaTestcontainerSingleton> findKafkaTestcontainerSingletonAnnotation(
+            ExtensionContext context) {
+        return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainerSingleton.class);
+    }
+
+    private static Optional<KafkaTestcontainerSingleton> findKafkaTestcontainerSingletonAnnotation(
+            Class<?> testClass) {
+        return AnnotationSupport.findAnnotation(testClass, KafkaTestcontainerSingleton.class);
+    }
+
+    private void startContainer(KafkaContainer container, String[] topicsKeys) {
+        GenericContainerUtil.startContainer(container);
+        var topics = loadFromSpringApplicationPropertiesFile(Arrays.asList(topicsKeys))
                 .values().stream()
                 .map(String::valueOf)
                 .collect(Collectors.toList());
         createTopics(container, topics);
         parseAndCheckCreatedTopicsFromKafkaContainer(container, topics);
-    }
-
-    private void startContainer(KafkaContainer container) {
-        Startables.deepStart(Stream.of(container))
-                .join();
-        assertThat(container.isRunning())
-                .isTrue();
     }
 
     private void createTopics(KafkaContainer container, List<String> topics) {
@@ -156,17 +150,21 @@ public class KafkaTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                var annotation = findCurrentAnnotation(testClass);
-                if (!annotation.isPresent()) {
-                    return;
+                if (findKafkaTestcontainerAnnotation(testClass).isPresent()) {
+                    init(context, findKafkaTestcontainerAnnotation(testClass).get().properties());
+                } else if (findKafkaTestcontainerSingletonAnnotation(testClass).isPresent()) {
+                    init(context, findKafkaTestcontainerSingletonAnnotation(testClass).get().properties());
                 }
-                var container = THREAD_CONTAINER.get();
-                TestPropertyValues.of(
-                        "kafka.bootstrap-servers=" + container.getBootstrapServers(),
-                        "kafka.ssl.enabled=false")
-                        .and(annotation.get().properties())
-                        .applyTo(context);
             };
+        }
+
+        private void init(ConfigurableApplicationContext context, String[] properties) {
+            var container = THREAD_CONTAINER.get();
+            TestPropertyValues.of(
+                    "kafka.bootstrap-servers=" + container.getBootstrapServers(),
+                    "kafka.ssl.enabled=false")
+                    .and(properties)
+                    .applyTo(context);
         }
     }
 }

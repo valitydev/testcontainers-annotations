@@ -12,8 +12,6 @@ import java.lang.annotation.Target;
 @ExtendWith(KafkaTestcontainerExtension.class)
 public @interface KafkaTestcontainer {
 
-    InstanceMode instanceMode() default InstanceMode.DEFAULT;
-
     /**
      * properties = {"kafka.topics.invoicing.consume.enabled=true",...}
      */
@@ -24,8 +22,4 @@ public @interface KafkaTestcontainer {
      */
     String[] topicsKeys();
 
-    enum InstanceMode {
-        SINGLETON,
-        DEFAULT
-    }
 }

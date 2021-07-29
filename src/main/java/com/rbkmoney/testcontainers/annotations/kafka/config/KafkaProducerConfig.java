@@ -25,18 +25,23 @@ public class KafkaProducerConfig {
     private String bootstrapAddress;
 
     @Bean
-    public KafkaTemplate<String, Command> testCommandProducer() {
-        return new KafkaTemplate<>(thriftProducerFactory());
+    public KafkaProducer<SinkEvent> testSinkEventKafkaProducer() {
+        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
     }
 
     @Bean
-    public KafkaTemplate<String, SinkEvent> testSinkEventProducer() {
-        return new KafkaTemplate<>(thriftProducerFactory());
+    public KafkaProducer<Event> testPayoutEventKafkaProducer() {
+        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
     }
 
     @Bean
-    public KafkaTemplate<String, Event> testPayoutProducer() {
-        return new KafkaTemplate<>(thriftProducerFactory());
+    public KafkaProducer<Command> testFraudbustersCommandKafkaProducer() {
+        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
+    }
+
+    @Bean
+    public KafkaProducer<TBase<?, ?>> testThriftBaseKafkaProducer() {
+        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
     }
 
     private <T extends TBase<?, ?>> ProducerFactory<String, T> thriftProducerFactory() {

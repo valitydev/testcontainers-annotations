@@ -8,17 +8,16 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.lifecycle.Startables;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
 
 @Slf4j
 public class PostgresqlTestcontainerExtension
@@ -28,65 +27,59 @@ public class PostgresqlTestcontainerExtension
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
+        var annotation = findPostgresqlTestcontainerSingletonAnnotation(context);
         if (!annotation.isPresent()) {
             return;
         }
-        var postgresqlTestcontainer = annotation.get();
-        if (postgresqlTestcontainer.instanceMode() == PostgresqlTestcontainer.InstanceMode.SINGLETON) {
-            var container = PostgresqlTestcontainerFactory.singletonContainer();
-            if (!container.isRunning()) {
-                startContainer(container);
-            }
-            THREAD_CONTAINER.set(container);
+        var container = PostgresqlTestcontainerFactory.singletonContainer();
+        if (!container.isRunning()) {
+            startContainer(container);
         }
+        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
+        var annotation = findPostgresqlTestcontainerAnnotation(context);
         if (!annotation.isPresent()) {
             return;
         }
-        var postgresqlTestcontainer = annotation.get();
-        if (postgresqlTestcontainer.instanceMode() == PostgresqlTestcontainer.InstanceMode.DEFAULT) {
-            var container = PostgresqlTestcontainerFactory.container();
-            if (!container.isRunning()) {
-                startContainer(container);
-            }
-            THREAD_CONTAINER.set(container);
+        var container = PostgresqlTestcontainerFactory.container();
+        if (!container.isRunning()) {
+            startContainer(container);
         }
+        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        var annotation = findCurrentAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var postgresqlTestcontainer = annotation.get();
-        if (postgresqlTestcontainer.instanceMode() == PostgresqlTestcontainer.InstanceMode.DEFAULT) {
+        if (findPostgresqlTestcontainerAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
+            THREAD_CONTAINER.remove();
+        } else if (findPostgresqlTestcontainerSingletonAnnotation(context).isPresent()) {
+            THREAD_CONTAINER.remove();
         }
-        THREAD_CONTAINER.remove();
     }
 
-    private static Optional<PostgresqlTestcontainer> findCurrentAnnotation(Class<?> testClass) {
-        return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainer.class);
-    }
-
-    private Optional<PostgresqlTestcontainer> findCurrentAnnotation(ExtensionContext context) {
+    private static Optional<PostgresqlTestcontainer> findPostgresqlTestcontainerAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), PostgresqlTestcontainer.class);
     }
 
-    private void startContainer(PostgreSQLContainer<?> container) {
-        Startables.deepStart(Stream.of(container))
-                .join();
-        assertThat(container.isRunning())
-                .isTrue();
+    private static Optional<PostgresqlTestcontainer> findPostgresqlTestcontainerAnnotation(Class<?> testClass) {
+        return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainer.class);
+    }
+
+    private static Optional<PostgresqlTestcontainerSingleton> findPostgresqlTestcontainerSingletonAnnotation(
+            ExtensionContext context) {
+        return AnnotationSupport.findAnnotation(context.getElement(), PostgresqlTestcontainerSingleton.class);
+    }
+
+    private static Optional<PostgresqlTestcontainerSingleton> findPostgresqlTestcontainerSingletonAnnotation(
+            Class<?> testClass) {
+        return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainerSingleton.class);
     }
 
     public static class PostgresqlTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -96,27 +89,31 @@ public class PostgresqlTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                var annotation = findCurrentAnnotation(testClass);
-                if (!annotation.isPresent()) {
-                    return;
+                if (findPostgresqlTestcontainerAnnotation(testClass).isPresent()) {
+                    init(context, findPostgresqlTestcontainerAnnotation(testClass).get().properties());
+                } else if (findPostgresqlTestcontainerSingletonAnnotation(testClass).isPresent()) {
+                    init(context, findPostgresqlTestcontainerSingletonAnnotation(testClass).get().properties());
                 }
-                var container = THREAD_CONTAINER.get();
-                var jdbcUrl = container.getJdbcUrl();
-                var username = container.getUsername();
-                var password = container.getPassword();
-                TestPropertyValues.of(
-                        "spring.datasource.url=" + jdbcUrl,
-                        "spring.datasource.username=" + username,
-                        "spring.datasource.password=" + password,
-                        "spring.flyway.url=" + jdbcUrl,
-                        "spring.flyway.user=" + username,
-                        "spring.flyway.password=" + password,
-                        "flyway.url=" + jdbcUrl,
-                        "flyway.user=" + username,
-                        "flyway.password=" + password)
-                        .and(annotation.get().properties())
-                        .applyTo(context);
             };
+        }
+
+        private void init(ConfigurableApplicationContext context, String[] properties) {
+            var container = THREAD_CONTAINER.get();
+            var jdbcUrl = container.getJdbcUrl();
+            var username = container.getUsername();
+            var password = container.getPassword();
+            TestPropertyValues.of(
+                    "spring.datasource.url=" + jdbcUrl,
+                    "spring.datasource.username=" + username,
+                    "spring.datasource.password=" + password,
+                    "spring.flyway.url=" + jdbcUrl,
+                    "spring.flyway.user=" + username,
+                    "spring.flyway.password=" + password,
+                    "flyway.url=" + jdbcUrl,
+                    "flyway.user=" + username,
+                    "flyway.password=" + password)
+                    .and(properties)
+                    .applyTo(context);
         }
     }
 }
