@@ -38,8 +38,8 @@ public class ClickhouseTestcontainerExtension
         var container = ClickhouseTestcontainerFactory.singletonContainer();
         if (!container.isRunning()) {
             startContainer(container);
-            appliedMigrations(container, annotation.get().migrations());
         }
+        appliedMigrations(container, annotation.get().migrations());
         THREAD_CONTAINER.set(container);
     }
 
@@ -52,8 +52,8 @@ public class ClickhouseTestcontainerExtension
         var container = ClickhouseTestcontainerFactory.container();
         if (!container.isRunning()) {
             startContainer(container);
-            appliedMigrations(container, annotation.get().migrations());
         }
+        appliedMigrations(container, annotation.get().migrations());
         THREAD_CONTAINER.set(container);
     }
 

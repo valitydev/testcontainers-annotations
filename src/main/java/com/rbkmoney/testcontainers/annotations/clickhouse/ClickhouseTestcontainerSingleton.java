@@ -20,7 +20,7 @@ public @interface ClickhouseTestcontainerSingleton {
     String[] properties() default {};
 
     /**
-     * migrations = {"sql/db_init.sql","sql/V1__create_payment.sql",...}
+     * migrations = {"sql/drop_tables.sql","sql/db_init.sql",...}
      */
     String[] migrations();
 
