@@ -5,7 +5,6 @@ import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -23,66 +22,53 @@ import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
-public class MinioTestcontainerExtension
-        implements TestInstancePostProcessor, BeforeAllCallback, AfterAllCallback {
+public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static final ThreadLocal<GenericContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findMinioTestcontainerSingletonAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var container = MinioTestcontainerFactory.singletonContainer();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
-    }
-
-    @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findMinioTestcontainerAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
+        if (findPrototypeAnnotation(context).isPresent()) {
+            init(MinioTestcontainerFactory.container());
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            init(MinioTestcontainerFactory.singletonContainer());
         }
-        var container = MinioTestcontainerFactory.container();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findMinioTestcontainerAnnotation(context).isPresent()) {
+        if (findPrototypeAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
             THREAD_CONTAINER.remove();
-        } else if (findMinioTestcontainerSingletonAnnotation(context).isPresent()) {
+        } else if (findSingletonAnnotation(context).isPresent()) {
             THREAD_CONTAINER.remove();
         }
     }
 
-    private static Optional<MinioTestcontainer> findMinioTestcontainerAnnotation(ExtensionContext context) {
+    private static Optional<MinioTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), MinioTestcontainer.class);
     }
 
-    private static Optional<MinioTestcontainer> findMinioTestcontainerAnnotation(Class<?> testClass) {
+    private static Optional<MinioTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, MinioTestcontainer.class);
     }
 
-    private static Optional<MinioTestcontainerSingleton> findMinioTestcontainerSingletonAnnotation(
-            ExtensionContext context) {
+    private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), MinioTestcontainerSingleton.class);
     }
 
-    private static Optional<MinioTestcontainerSingleton> findMinioTestcontainerSingletonAnnotation(
-            Class<?> testClass) {
+    private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, MinioTestcontainerSingleton.class);
+    }
+
+    private void init(GenericContainer<? extends GenericContainer<?>> container) {
+        if (!container.isRunning()) {
+            startContainer(container);
+        }
+        THREAD_CONTAINER.set(container);
     }
 
     public static class MinioTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -92,9 +78,8 @@ public class MinioTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                var minioTestcontainerAnnotation = findMinioTestcontainerAnnotation(testClass);
-                if (minioTestcontainerAnnotation.isPresent()) {
-                    var annotation = minioTestcontainerAnnotation.get();
+                if (findPrototypeAnnotation(testClass).isPresent()) {
+                    var annotation = findPrototypeAnnotation(testClass).get();
                     init(
                             context,
                             annotation.signingRegion(),
@@ -103,7 +88,7 @@ public class MinioTestcontainerExtension
                             annotation.bucketName(),
                             annotation.properties());
                 } else {
-                    findMinioTestcontainerSingletonAnnotation(testClass).ifPresent(
+                    findSingletonAnnotation(testClass).ifPresent(
                             annotation -> init(
                                     context,
                                     annotation.signingRegion(),

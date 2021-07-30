@@ -7,6 +7,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.getWaitStrategy;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
@@ -47,7 +48,7 @@ public class CephTestcontainerFactory {
                 DockerImageName
                         .parse(CEPH_DAEMON_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
-                .withNetworkAliases("ceph-daemon")
+                .withNetworkAliases("ceph-daemon-" + UUID.randomUUID())
                 .withEnv("RGW_NAME", "localhost")
                 .withEnv("NETWORK_AUTO_DETECT", "4")
                 .withEnv("CEPH_DAEMON", "demo")

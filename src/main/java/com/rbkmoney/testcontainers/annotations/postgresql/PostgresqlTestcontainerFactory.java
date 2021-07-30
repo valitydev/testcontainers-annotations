@@ -6,6 +6,8 @@ import lombok.Synchronized;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.UUID;
+
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -42,7 +44,7 @@ public class PostgresqlTestcontainerFactory {
                 DockerImageName
                         .parse(POSTGRESQL_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
-            container.withNetworkAliases("postgres");
+            container.withNetworkAliases("postgres-" + UUID.randomUUID());
             return container;
         }
     }

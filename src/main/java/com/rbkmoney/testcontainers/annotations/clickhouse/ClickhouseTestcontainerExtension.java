@@ -7,7 +7,6 @@ import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -24,68 +23,55 @@ import java.util.Optional;
 import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
 
 @Slf4j
-public class ClickhouseTestcontainerExtension
-        implements TestInstancePostProcessor, BeforeAllCallback, AfterAllCallback {
+public class ClickhouseTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static final ThreadLocal<ClickHouseContainer> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findClickhouseTestcontainerSingletonAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var container = ClickhouseTestcontainerFactory.singletonContainer();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        appliedMigrations(container, annotation.get().migrations());
-        THREAD_CONTAINER.set(container);
-    }
-
-    @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findClickhouseTestcontainerAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
+        if (findPrototypeAnnotation(context).isPresent()) {
+            init(ClickhouseTestcontainerFactory.container(), findPrototypeAnnotation(context).get().migrations());
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            String[] migrations = findSingletonAnnotation(context).get().migrations();
+            init(ClickhouseTestcontainerFactory.singletonContainer(), migrations);
         }
-        var container = ClickhouseTestcontainerFactory.container();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        appliedMigrations(container, annotation.get().migrations());
-        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findClickhouseTestcontainerAnnotation(context).isPresent()) {
+        if (findPrototypeAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
             THREAD_CONTAINER.remove();
-        } else if (findClickhouseTestcontainerSingletonAnnotation(context).isPresent()) {
+        } else if (findSingletonAnnotation(context).isPresent()) {
             THREAD_CONTAINER.remove();
         }
     }
 
-    private static Optional<ClickhouseTestcontainer> findClickhouseTestcontainerAnnotation(ExtensionContext context) {
+    private static Optional<ClickhouseTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), ClickhouseTestcontainer.class);
     }
 
-    private static Optional<ClickhouseTestcontainer> findClickhouseTestcontainerAnnotation(Class<?> testClass) {
+    private static Optional<ClickhouseTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, ClickhouseTestcontainer.class);
     }
 
-    private static Optional<ClickhouseTestcontainerSingleton> findClickhouseTestcontainerSingletonAnnotation(
-            ExtensionContext context) {
+    private static Optional<ClickhouseTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), ClickhouseTestcontainerSingleton.class);
     }
 
-    private static Optional<ClickhouseTestcontainerSingleton> findClickhouseTestcontainerSingletonAnnotation(
-            Class<?> testClass) {
+    private static Optional<ClickhouseTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, ClickhouseTestcontainerSingleton.class);
+    }
+
+    private void init(ClickHouseContainer container, String[] migrations) {
+        if (!container.isRunning()) {
+            startContainer(container);
+        }
+        appliedMigrations(container, migrations);
+        THREAD_CONTAINER.set(container);
     }
 
     private void appliedMigrations(ClickHouseContainer container, String[] migrations) {
@@ -106,10 +92,10 @@ public class ClickhouseTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                if (findClickhouseTestcontainerAnnotation(testClass).isPresent()) {
-                    init(context, findClickhouseTestcontainerAnnotation(testClass).get().properties());
-                } else if (findClickhouseTestcontainerSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findClickhouseTestcontainerSingletonAnnotation(testClass).get().properties());
+                if (findPrototypeAnnotation(testClass).isPresent()) {
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
+                } else if (findSingletonAnnotation(testClass).isPresent()) {
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }

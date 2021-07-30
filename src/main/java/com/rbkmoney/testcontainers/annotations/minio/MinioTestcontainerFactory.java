@@ -7,6 +7,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.getWaitStrategy;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
@@ -47,7 +48,7 @@ public class MinioTestcontainerFactory {
                 DockerImageName
                         .parse(MINIO_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
-                .withNetworkAliases("minio")
+                .withNetworkAliases("minio-" + UUID.randomUUID())
                 .withEnv("MINIO_ROOT_USER", loadDefaultLibraryProperty(MINIO_USER))
                 .withEnv("MINIO_ROOT_PASSWORD", loadDefaultLibraryProperty(MINIO_PASSWORD))
                 .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)))) {

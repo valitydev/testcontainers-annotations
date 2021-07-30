@@ -10,7 +10,6 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -33,66 +32,53 @@ import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationProp
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
-public class KafkaTestcontainerExtension
-        implements TestInstancePostProcessor, BeforeAllCallback, AfterAllCallback {
+public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static final ThreadLocal<KafkaContainer> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findKafkaTestcontainerSingletonAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var container = KafkaTestcontainerFactory.singletonContainer();
-        if (!container.isRunning()) {
-            startContainer(container, annotation.get().topicsKeys());
-        }
-        THREAD_CONTAINER.set(container);
-    }
-
-    @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findKafkaTestcontainerAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
+        if (findPrototypeAnnotation(context).isPresent()) {
+            init(KafkaTestcontainerFactory.container(), findPrototypeAnnotation(context).get().topicsKeys());
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            init(KafkaTestcontainerFactory.singletonContainer(), findSingletonAnnotation(context).get().topicsKeys());
         }
-        var container = KafkaTestcontainerFactory.container();
-        if (!container.isRunning()) {
-            startContainer(container, annotation.get().topicsKeys());
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findKafkaTestcontainerAnnotation(context).isPresent()) {
+        if (findPrototypeAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
             THREAD_CONTAINER.remove();
-        } else if (findKafkaTestcontainerSingletonAnnotation(context).isPresent()) {
+        } else if (findSingletonAnnotation(context).isPresent()) {
             THREAD_CONTAINER.remove();
         }
     }
 
-    private static Optional<KafkaTestcontainer> findKafkaTestcontainerAnnotation(ExtensionContext context) {
+    private static Optional<KafkaTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainer.class);
     }
 
-    private static Optional<KafkaTestcontainer> findKafkaTestcontainerAnnotation(Class<?> testClass) {
+    private static Optional<KafkaTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, KafkaTestcontainer.class);
     }
 
-    private static Optional<KafkaTestcontainerSingleton> findKafkaTestcontainerSingletonAnnotation(
-            ExtensionContext context) {
+    private static Optional<KafkaTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainerSingleton.class);
     }
 
-    private static Optional<KafkaTestcontainerSingleton> findKafkaTestcontainerSingletonAnnotation(
-            Class<?> testClass) {
+    private static Optional<KafkaTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, KafkaTestcontainerSingleton.class);
+    }
+
+    private void init(KafkaContainer container, String[] topicsKeys) {
+        if (!container.isRunning()) {
+            startContainer(container, topicsKeys);
+        }
+        THREAD_CONTAINER.set(container);
     }
 
     private void startContainer(KafkaContainer container, String[] topicsKeys) {
@@ -150,10 +136,10 @@ public class KafkaTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                if (findKafkaTestcontainerAnnotation(testClass).isPresent()) {
-                    init(context, findKafkaTestcontainerAnnotation(testClass).get().properties());
-                } else if (findKafkaTestcontainerSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findKafkaTestcontainerSingletonAnnotation(testClass).get().properties());
+                if (findPrototypeAnnotation(testClass).isPresent()) {
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
+                } else if (findSingletonAnnotation(testClass).isPresent()) {
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }

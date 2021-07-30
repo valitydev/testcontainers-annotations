@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.UUID;
+
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
@@ -45,7 +47,7 @@ public class KafkaTestcontainerFactory {
                         .parse(KAFKA_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
                 .withEmbeddedZookeeper()) {
-            container.withNetworkAliases("cp-kafka");
+            container.withNetworkAliases("cp-kafka-" + UUID.randomUUID());
             return container;
         }
     }

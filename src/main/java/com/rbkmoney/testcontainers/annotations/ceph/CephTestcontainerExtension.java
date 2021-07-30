@@ -5,7 +5,6 @@ import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -23,66 +22,53 @@ import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
-public class CephTestcontainerExtension
-        implements TestInstancePostProcessor, BeforeAllCallback, AfterAllCallback {
+public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static final ThreadLocal<GenericContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        var annotation = findCephTestcontainerSingletonAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
-        }
-        var container = CephTestcontainerFactory.singletonContainer();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
-    }
-
-    @Override
     public void beforeAll(ExtensionContext context) {
-        var annotation = findCephTestcontainerAnnotation(context);
-        if (!annotation.isPresent()) {
-            return;
+        if (findPrototypeAnnotation(context).isPresent()) {
+            init(CephTestcontainerFactory.container());
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            init(CephTestcontainerFactory.singletonContainer());
         }
-        var container = CephTestcontainerFactory.container();
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findCephTestcontainerAnnotation(context).isPresent()) {
+        if (findPrototypeAnnotation(context).isPresent()) {
             var container = THREAD_CONTAINER.get();
             if (container != null && container.isRunning()) {
                 container.stop();
             }
             THREAD_CONTAINER.remove();
-        } else if (findCephTestcontainerSingletonAnnotation(context).isPresent()) {
+        } else if (findSingletonAnnotation(context).isPresent()) {
             THREAD_CONTAINER.remove();
         }
     }
 
-    private static Optional<CephTestcontainer> findCephTestcontainerAnnotation(ExtensionContext context) {
+    private static Optional<CephTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), CephTestcontainer.class);
     }
 
-    private static Optional<CephTestcontainer> findCephTestcontainerAnnotation(Class<?> testClass) {
+    private static Optional<CephTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, CephTestcontainer.class);
     }
 
-    private static Optional<CephTestcontainerSingleton> findCephTestcontainerSingletonAnnotation(
-            ExtensionContext context) {
+    private static Optional<CephTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
         return AnnotationSupport.findAnnotation(context.getElement(), CephTestcontainerSingleton.class);
     }
 
-    private static Optional<CephTestcontainerSingleton> findCephTestcontainerSingletonAnnotation(
-            Class<?> testClass) {
+    private static Optional<CephTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, CephTestcontainerSingleton.class);
+    }
+
+    private void init(GenericContainer<? extends GenericContainer<?>> container) {
+        if (!container.isRunning()) {
+            startContainer(container);
+        }
+        THREAD_CONTAINER.set(container);
     }
 
     public static class CephTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -92,9 +78,8 @@ public class CephTestcontainerExtension
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
-                var cephTestcontainerAnnotation = findCephTestcontainerAnnotation(testClass);
-                if (cephTestcontainerAnnotation.isPresent()) {
-                    var annotation = cephTestcontainerAnnotation.get();
+                if (findPrototypeAnnotation(testClass).isPresent()) {
+                    var annotation = findPrototypeAnnotation(testClass).get();
                     init(
                             context,
                             annotation.signingRegion(),
@@ -103,7 +88,7 @@ public class CephTestcontainerExtension
                             annotation.bucketName(),
                             annotation.properties());
                 } else {
-                    findCephTestcontainerSingletonAnnotation(testClass).ifPresent(
+                    findSingletonAnnotation(testClass).ifPresent(
                             annotation -> init(
                                     context,
                                     annotation.signingRegion(),

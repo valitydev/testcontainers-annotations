@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.ClickHouseContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.util.UUID;
+
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
@@ -44,7 +46,7 @@ public class ClickhouseTestcontainerFactory {
                 DockerImageName
                         .parse(CLICKHOUSE_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
-            container.withNetworkAliases("clickhouse-server");
+            container.withNetworkAliases("clickhouse-server-" + UUID.randomUUID());
             return container;
         }
     }
