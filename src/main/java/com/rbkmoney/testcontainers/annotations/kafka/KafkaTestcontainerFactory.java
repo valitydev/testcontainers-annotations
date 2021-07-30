@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadTagFromSpringApplicationPropertiesFile;
+import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,8 +43,9 @@ public class KafkaTestcontainerFactory {
         try (KafkaContainer container = new KafkaContainer(
                 DockerImageName
                         .parse(KAFKA_IMAGE_NAME)
-                        .withTag(loadTagFromSpringApplicationPropertiesFile(TAG_PROPERTY)))
+                        .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
                 .withEmbeddedZookeeper()) {
+            container.withNetworkAliases("cp-kafka");
             return container;
         }
     }

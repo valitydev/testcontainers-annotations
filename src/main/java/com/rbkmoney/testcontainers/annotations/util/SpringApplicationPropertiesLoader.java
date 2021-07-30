@@ -23,14 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringApplicationPropertiesLoader {
 
-    public static String loadTagFromSpringApplicationPropertiesFile(String keyTag) {
-        var tag = loadPropertiesByFile().get(keyTag);
+    public static String loadDefaultLibraryProperty(String key) {
+        var tag = loadPropertiesByFile().get(key);
         if (tag == null) {
             tag = getSource(PropertiesFileParameters.builder()
                     .propertySourceLoader(YamlPropertySourceLoader::new)
                     .name("testcontainers-annotations.yml")
                     .build())
-                    .get(keyTag);
+                    .get(key);
         }
         return String.valueOf(tag);
     }

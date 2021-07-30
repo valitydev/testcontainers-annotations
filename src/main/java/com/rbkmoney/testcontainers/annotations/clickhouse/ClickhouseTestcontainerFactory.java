@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.ClickHouseContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadTagFromSpringApplicationPropertiesFile;
+import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,7 +43,8 @@ public class ClickhouseTestcontainerFactory {
         try (ClickHouseContainer container = new ClickHouseContainer(
                 DockerImageName
                         .parse(CLICKHOUSE_IMAGE_NAME)
-                        .withTag(loadTagFromSpringApplicationPropertiesFile(TAG_PROPERTY)))) {
+                        .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
+            container.withNetworkAliases("clickhouse-server");
             return container;
         }
     }

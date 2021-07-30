@@ -5,3 +5,7 @@ testcontainers:
     tag: '6.2.0'
   clickhouse:
     tag: 'latest-alpine'
+  ceph:
+    tag: 'v3.0.5-stable-3.0-luminous-centos-7'
+    accessKey: 'test'
+    secretKey: 'test'
