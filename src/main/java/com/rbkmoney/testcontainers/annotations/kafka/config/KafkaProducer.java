@@ -15,5 +15,6 @@ public class KafkaProducer<T> {
         kafkaTemplate.send(topic, payload)
                 .completable()
                 .join();
+        kafkaTemplate.getProducerFactory().reset();
     }
 }

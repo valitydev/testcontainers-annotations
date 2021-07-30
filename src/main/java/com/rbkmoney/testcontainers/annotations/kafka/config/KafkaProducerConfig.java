@@ -1,15 +1,13 @@
 package com.rbkmoney.testcontainers.annotations.kafka.config;
 
-import com.rbkmoney.damsel.fraudbusters.Command;
 import com.rbkmoney.kafka.common.serialization.ThriftSerializer;
-import com.rbkmoney.machinegun.eventsink.SinkEvent;
-import com.rbkmoney.payout.manager.Event;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.thrift.TBase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -25,26 +23,12 @@ public class KafkaProducerConfig {
     private String bootstrapAddress;
 
     @Bean
-    public KafkaProducer<SinkEvent> testSinkEventKafkaProducer() {
+    @Scope("prototype")
+    public KafkaProducer<TBase<?, ?>> testThriftKafkaProducer() {
         return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
     }
 
-    @Bean
-    public KafkaProducer<Event> testPayoutEventKafkaProducer() {
-        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
-    }
-
-    @Bean
-    public KafkaProducer<Command> testFraudbustersCommandKafkaProducer() {
-        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
-    }
-
-    @Bean
-    public KafkaProducer<TBase<?, ?>> testThriftBaseKafkaProducer() {
-        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
-    }
-
-    private <T extends TBase<?, ?>> ProducerFactory<String, T> thriftProducerFactory() {
+    private ProducerFactory<String, TBase<?, ?>> thriftProducerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
