@@ -48,6 +48,7 @@ public class CephTestcontainerFactory {
                 DockerImageName
                         .parse(CEPH_DAEMON_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
+                .withExposedPorts(5000, 8080)
                 .withNetworkAliases("ceph-daemon-" + UUID.randomUUID())
                 .withEnv("RGW_NAME", "localhost")
                 .withEnv("NETWORK_AUTO_DETECT", "4")

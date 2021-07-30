@@ -23,6 +23,9 @@ public @interface MinioTestcontainer {
 
     String clientMaxErrorRetry() default "10";
 
-    String bucketName() default "TEST";
+    /**
+     * lowercase!
+     */
+    String bucketName() default "test";
 
 }

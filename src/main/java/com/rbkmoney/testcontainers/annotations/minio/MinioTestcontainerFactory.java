@@ -48,9 +48,11 @@ public class MinioTestcontainerFactory {
                 DockerImageName
                         .parse(MINIO_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
+                .withExposedPorts(9000)
                 .withNetworkAliases("minio-" + UUID.randomUUID())
                 .withEnv("MINIO_ROOT_USER", loadDefaultLibraryProperty(MINIO_USER))
                 .withEnv("MINIO_ROOT_PASSWORD", loadDefaultLibraryProperty(MINIO_PASSWORD))
+                .withCommand("server /data")
                 .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)))) {
             return container;
         }
