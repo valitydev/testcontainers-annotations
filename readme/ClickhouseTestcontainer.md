@@ -3,7 +3,7 @@
 Аннотация подключает и запускает тестконтейнер `ClickHouseContainer` + настройки
 контейнера будут проинициализированы в контекст тестового приложения
 
-Аннотация не требует дополнительной конфигурации
+Аннотация требует дополнительной конфигурации (см. ниже)
 
 Пример использования — в [fraudbusters](https://github.com/rbkmoney/fraudbusters/pull/137)
 
@@ -34,8 +34,11 @@ String[] migrations();
 #### Примеры использования
 
 ```java
-@ClickhouseTestcontainer // or @ClickhouseTestcontainerSingleton
-@SpringBootTest // or @DefaultSpringBootTest
+@ClickhouseTestcontainer(
+        migrations = {
+                "sql/db_init.sql",
+                "sql/V4__create_payment.sql"})
+@SpringBootTest
 public class AdjustmentDaoTest {
 
     @Autowired
@@ -49,7 +52,10 @@ public class AdjustmentDaoTest {
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ClickhouseTestcontainer
+@ClickhouseTestcontainer(
+        migrations = {
+                "sql/db_init.sql",
+                "sql/V4__create_payment.sql"})
 @DefaultSpringBootTest
 public @interface ClickhouseSpringBootITest {
 }

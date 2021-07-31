@@ -47,3 +47,8 @@ public @interface PostgresqlSpringBootITest {
 }
 
 ```
+
+Еще пример
+
+![image](https://user-images.githubusercontent.com/19729841/127737721-269b8fba-a3ee-4145-ae2f-e20a0278bfb8.png)
+
