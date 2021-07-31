@@ -30,9 +30,11 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(ClickhouseTestcontainerFactory.container(), findPrototypeAnnotation(context).get().migrations());
+            init(
+                    ClickhouseTestcontainerFactory.container(),
+                    findPrototypeAnnotation(context).get().migrations()); //NOSONAR
         } else if (findSingletonAnnotation(context).isPresent()) {
-            String[] migrations = findSingletonAnnotation(context).get().migrations();
+            String[] migrations = findSingletonAnnotation(context).get().migrations(); //NOSONAR
             init(ClickhouseTestcontainerFactory.singletonContainer(), migrations);
         }
     }
@@ -93,9 +95,9 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties());
+                    init(context, findPrototypeAnnotation(testClass).get().properties()); //NOSONAR
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties());
+                    init(context, findSingletonAnnotation(testClass).get().properties()); //NOSONAR
                 }
             };
         }

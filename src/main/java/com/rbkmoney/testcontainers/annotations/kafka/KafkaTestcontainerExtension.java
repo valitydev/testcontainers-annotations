@@ -39,9 +39,11 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(KafkaTestcontainerFactory.container(), findPrototypeAnnotation(context).get().topicsKeys());
+            init(KafkaTestcontainerFactory.container(), findPrototypeAnnotation(context).get().topicsKeys()); //NOSONAR
         } else if (findSingletonAnnotation(context).isPresent()) {
-            init(KafkaTestcontainerFactory.singletonContainer(), findSingletonAnnotation(context).get().topicsKeys());
+            init(
+                    KafkaTestcontainerFactory.singletonContainer(),
+                    findSingletonAnnotation(context).get().topicsKeys()); //NOSONAR
         }
     }
 
@@ -137,9 +139,9 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties());
+                    init(context, findPrototypeAnnotation(testClass).get().properties()); //NOSONAR
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties());
+                    init(context, findSingletonAnnotation(testClass).get().properties()); //NOSONAR
                 }
             };
         }
