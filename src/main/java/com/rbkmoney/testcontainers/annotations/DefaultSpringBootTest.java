@@ -1,4 +1,4 @@
-package com.rbkmoney.testcontainers.annotations.spring.boot.test.context;
+package com.rbkmoney.testcontainers.annotations;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;

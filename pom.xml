@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <artifactId>testcontainers-annotations</artifactId>
-    <version>1.1.1</version>
+    <version>1.2.0</version>
     <url>https://github.com/rbkmoney/testcontainers-annotations</url>
 
     <licenses>
@@ -152,6 +152,21 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.benas</groupId>
+            <artifactId>random-beans</artifactId>
+            <version>3.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney.geck</groupId>
+            <artifactId>common</artifactId>
+            <version>0.6.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rbkmoney.geck</groupId>
+            <artifactId>serializer</artifactId>
+            <version>0.6.11</version>
         </dependency>
     </dependencies>
 </project>

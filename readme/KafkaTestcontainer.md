@@ -31,9 +31,10 @@ String[] topicsKeys();
 
 ###### Дополнительные обертки
 
-`@DefaultSpringBootTest` представляет из себя типичный для домена [rbkmoney](https://github.com/rbkmoney) набор аннотаций используемых с `SpringBootTest` при тестированию спринговых приложений 
+`@DefaultSpringBootTest` представляет из себя типичный для домена [rbkmoney](https://github.com/rbkmoney) набор
+аннотаций, используемых с `SpringBootTest` при тестировании спринговых приложений
 
-`@KafkaProducerSpringBootTest`, `@KafkaConsumerSpringBootTest` набор аннотаций используемых с `SpringBootTest` при тестированию спринговых приложений c кафкой
+`@KafkaSpringBootTest` аннотация, используемая с `SpringBootTest` при тестировании спринговых приложений c кафкой
 
 ## Init `@ContextConfiguration`
 
@@ -99,7 +100,7 @@ public @interface ApplicationKafkaTestcontainer {
 @Retention(RetentionPolicy.RUNTIME)
 @PostgresqlTestcontainer
 @ApplicationKafkaTestcontainer
-@KafkaProducerSpringBootTest
+@KafkaSpringBootTest
 public @interface ApplicationSpringBootITest {
 }
 ```

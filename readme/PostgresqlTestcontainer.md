@@ -21,7 +21,8 @@ String[] properties() default {};
 
 ###### Дополнительные обертки
 
-`@DefaultSpringBootTest` представляет из себя типичный для домена [rbkmoney](https://github.com/rbkmoney)) набор аннотаций используемых с `SpringBootTest` при тестированию спринговых приложений   
+`@DefaultSpringBootTest` представляет из себя типичный для домена [rbkmoney](https://github.com/rbkmoney)) набор
+аннотаций, используемых с `SpringBootTest` при тестировании спринговых приложений
 
 #### Примеры использования
 
