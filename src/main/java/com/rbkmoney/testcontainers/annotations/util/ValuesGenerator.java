@@ -19,9 +19,9 @@ import static java.time.ZoneId.systemDefault;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValuesGenerator {
 
-    private final LocalDateTime fromTime = LocalDateTime.now().minusHours(3);
-    private final LocalDateTime toTime = LocalDateTime.now().minusHours(1);
-    private final LocalDateTime inFromToPeriodTime = LocalDateTime.now().minusHours(2);
+    private static final LocalDateTime fromTime = LocalDateTime.now().minusHours(3);
+    private static final LocalDateTime toTime = LocalDateTime.now().minusHours(1);
+    private static final LocalDateTime inFromToPeriodTime = LocalDateTime.now().minusHours(2);
 
     public static String generateDate() {
         return TypeUtil.temporalToString(LocalDateTime.now());
@@ -55,15 +55,15 @@ public class ValuesGenerator {
         return IOUtils.toString(content, StandardCharsets.UTF_8);
     }
 
-    public LocalDateTime getFromTime() {
+    public static LocalDateTime getFromTime() {
         return fromTime;
     }
 
-    public LocalDateTime getToTime() {
+    public static LocalDateTime getToTime() {
         return toTime;
     }
 
-    public LocalDateTime getInFromToPeriodTime() {
+    public static LocalDateTime getInFromToPeriodTime() {
         return inFromToPeriodTime;
     }
 

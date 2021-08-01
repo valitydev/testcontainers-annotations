@@ -110,4 +110,5 @@ public @interface ApplicationSpringBootITest {
 
 Еще пример использования 
 
-![image](https://user-images.githubusercontent.com/19729841/127735631-ef069f6c-9707-452e-ae03-a389d64adbbe.png)
+![image](https://user-images.githubusercontent.com/19729841/127762003-1d53be45-a807-467c-92e4-f587356e7437.png)
+
