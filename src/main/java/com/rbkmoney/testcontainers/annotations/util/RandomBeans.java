@@ -29,20 +29,20 @@ public class RandomBeans {
     }
 
     @SneakyThrows
-    public static <T extends TBase<?, ?>> T fillThriftObject(T data, Class<T> type) {
+    public static <T extends TBase<?, ?>> T randomThrift(Class<T> type) {
         var mockTBaseProcessor = new MockTBaseProcessor(MockMode.ALL, 25, 1);
         mockTBaseProcessor.addFieldHandler(
                 structHandler -> structHandler.value(Instant.now().toString()),
                 "created_at", "at", "due");
-        return mockTBaseProcessor.process(data, new TBaseHandler<>(type));
+        return mockTBaseProcessor.process(type.getConstructor().newInstance(), new TBaseHandler<>(type));
     }
 
     @SneakyThrows
-    public static <T extends TBase<?, ?>> T fillOnlyRequiredFieldsThriftObject(T data, Class<T> type) {
+    public static <T extends TBase<?, ?>> T randomThriftOnlyRequiredFields(Class<T> type) {
         var mockTBaseProcessor = new MockTBaseProcessor(MockMode.REQUIRED_ONLY, 25, 1);
         mockTBaseProcessor.addFieldHandler(
                 structHandler -> structHandler.value(Instant.now().toString()),
                 "created_at", "at", "due");
-        return mockTBaseProcessor.process(data, new TBaseHandler<>(type));
+        return mockTBaseProcessor.process(type.getConstructor().newInstance(), new TBaseHandler<>(type));
     }
 }
