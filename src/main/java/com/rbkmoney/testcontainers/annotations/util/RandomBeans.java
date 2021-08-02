@@ -1,5 +1,13 @@
 package com.rbkmoney.testcontainers.annotations.util;
 
+import com.rbkmoney.geck.serializer.kit.mock.MockMode;
+import com.rbkmoney.geck.serializer.kit.mock.MockTBaseProcessor;
+import com.rbkmoney.geck.serializer.kit.tbase.TBaseHandler;
+import lombok.SneakyThrows;
+import lombok.var;
+import org.apache.thrift.TBase;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,5 +26,23 @@ public class RandomBeans {
 
     public static <T> Stream<T> randomStreamOf(int amount, Class<T> type, String... excludedFields) {
         return aNewEnhancedRandom().objects(type, amount, excludedFields);
+    }
+
+    @SneakyThrows
+    public static <T extends TBase<?, ?>> T fillThriftObject(T data, Class<T> type) {
+        var mockTBaseProcessor = new MockTBaseProcessor(MockMode.ALL, 25, 1);
+        mockTBaseProcessor.addFieldHandler(
+                structHandler -> structHandler.value(Instant.now().toString()),
+                "created_at", "at", "due");
+        return mockTBaseProcessor.process(data, new TBaseHandler<>(type));
+    }
+
+    @SneakyThrows
+    public static <T extends TBase<?, ?>> T fillOnlyRequiredFieldsThriftObject(T data, Class<T> type) {
+        var mockTBaseProcessor = new MockTBaseProcessor(MockMode.REQUIRED_ONLY, 25, 1);
+        mockTBaseProcessor.addFieldHandler(
+                structHandler -> structHandler.value(Instant.now().toString()),
+                "created_at", "at", "due");
+        return mockTBaseProcessor.process(data, new TBaseHandler<>(type));
     }
 }

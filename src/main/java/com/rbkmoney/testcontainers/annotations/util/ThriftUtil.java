@@ -18,6 +18,11 @@ import java.time.Instant;
 
 public class ThriftUtil {
 
+    /**
+     * @deprecated will be removed in future.
+     * Use {@link RandomBeans#fillThriftObject(T, java.lang.Class)} instead
+     */
+    @Deprecated
     @SneakyThrows
     public static <T extends TBase<?, ?>> T fillThriftObject(T data, Class<T> type) {
         var mockTBaseProcessor = new MockTBaseProcessor(MockMode.REQUIRED_ONLY, 25, 1);

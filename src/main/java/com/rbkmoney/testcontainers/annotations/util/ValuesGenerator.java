@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 import static com.rbkmoney.testcontainers.annotations.util.RandomBeans.random;
 import static java.time.LocalDateTime.now;
@@ -22,6 +23,10 @@ public class ValuesGenerator {
     private static final LocalDateTime fromTime = LocalDateTime.now().minusHours(3);
     private static final LocalDateTime toTime = LocalDateTime.now().minusHours(1);
     private static final LocalDateTime inFromToPeriodTime = LocalDateTime.now().minusHours(2);
+
+    public static String generateId() {
+        return UUID.randomUUID().toString();
+    }
 
     public static String generateDate() {
         return TypeUtil.temporalToString(LocalDateTime.now());
