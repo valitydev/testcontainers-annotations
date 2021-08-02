@@ -19,8 +19,7 @@ import java.time.Instant;
 public class ThriftUtil {
 
     /**
-     * @deprecated will be removed in future.
-     * Use {@link RandomBeans#fillThriftObject(T, java.lang.Class)} instead
+     * @deprecated will be removed in future. Use {@link RandomBeans#fillThriftObject(T, java.lang.Class)} instead
      */
     @Deprecated
     @SneakyThrows
