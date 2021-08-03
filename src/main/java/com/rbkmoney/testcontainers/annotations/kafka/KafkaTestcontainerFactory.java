@@ -46,7 +46,8 @@ public class KafkaTestcontainerFactory {
                 DockerImageName
                         .parse(KAFKA_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
-                .withEmbeddedZookeeper()) {
+                .withEmbeddedZookeeper()
+                .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")) {
             container.withNetworkAliases("cp-kafka-" + UUID.randomUUID());
             return container;
         }
