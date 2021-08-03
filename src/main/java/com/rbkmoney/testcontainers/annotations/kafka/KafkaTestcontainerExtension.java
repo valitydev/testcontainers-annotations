@@ -19,7 +19,10 @@ import org.springframework.test.context.ContextCustomizerFactory;
 import org.testcontainers.containers.KafkaContainer;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,7 +41,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
         if (findPrototypeAnnotation(context).isPresent()) {
             var container = KafkaTestcontainerFactory.container();
             GenericContainerUtil.startContainer(container);
-            List<String> topics = loadTopics(findPrototypeAnnotation(context).get().topicsKeys()); //NOSONAR
+            var topics = loadTopics(findPrototypeAnnotation(context).get().topicsKeys()); //NOSONAR
             createTopics(container, topics);
             THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
@@ -99,7 +102,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var topicsResult = admin.createTopics(newTopics);
             // wait until everyone is created or timeout
             topicsResult.all().get(30, TimeUnit.SECONDS);
-            Set<String> adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
+            var adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
             log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: " + adminClientTopics);
             assertThat(adminClientTopics.size())
                     .isEqualTo(topics.size());
@@ -119,7 +122,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var topicsResult = admin.deleteTopics(topics);
             // wait until everyone is deleted or timeout
             topicsResult.all().get(30, TimeUnit.SECONDS);
-            Set<String> adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
+            var adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
             log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: " +
                     adminClientTopics + " (should be empty)");
             assertThat(adminClientTopics)

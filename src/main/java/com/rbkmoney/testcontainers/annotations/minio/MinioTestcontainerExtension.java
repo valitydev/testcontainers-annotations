@@ -1,5 +1,6 @@
 package com.rbkmoney.testcontainers.annotations.minio;
 
+import com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -18,7 +19,6 @@ import java.util.Optional;
 
 import static com.rbkmoney.testcontainers.annotations.minio.MinioTestcontainerFactory.MINIO_PASSWORD;
 import static com.rbkmoney.testcontainers.annotations.minio.MinioTestcontainerFactory.MINIO_USER;
-import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
@@ -29,9 +29,15 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(MinioTestcontainerFactory.container());
+            var container = MinioTestcontainerFactory.container();
+            GenericContainerUtil.startContainer(container);
+            THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
-            init(MinioTestcontainerFactory.singletonContainer());
+            var container = MinioTestcontainerFactory.singletonContainer();
+            if (!container.isRunning()) {
+                GenericContainerUtil.startContainer(container);
+            }
+            THREAD_CONTAINER.set(container);
         }
     }
 
@@ -62,13 +68,6 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
 
     private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, MinioTestcontainerSingleton.class);
-    }
-
-    private void init(GenericContainer<? extends GenericContainer<?>> container) {
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     public static class MinioTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {

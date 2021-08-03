@@ -1,5 +1,6 @@
 package com.rbkmoney.testcontainers.annotations.postgresql;
 
+import com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -16,8 +17,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.util.List;
 import java.util.Optional;
 
-import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
-
 @Slf4j
 public class PostgresqlTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
@@ -26,9 +25,15 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(PostgresqlTestcontainerFactory.container());
+            var container = PostgresqlTestcontainerFactory.container();
+            GenericContainerUtil.startContainer(container);
+            THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
-            init(PostgresqlTestcontainerFactory.singletonContainer());
+            var container = PostgresqlTestcontainerFactory.singletonContainer();
+            if (!container.isRunning()) {
+                GenericContainerUtil.startContainer(container);
+            }
+            THREAD_CONTAINER.set(container);
         }
     }
 
@@ -59,13 +64,6 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
 
     private static Optional<PostgresqlTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainerSingleton.class);
-    }
-
-    private void init(PostgreSQLContainer<? extends PostgreSQLContainer<?>> container) {
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     public static class PostgresqlTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {

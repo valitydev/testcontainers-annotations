@@ -1,5 +1,6 @@
 package com.rbkmoney.testcontainers.annotations.ceph;
 
+import com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -18,7 +19,6 @@ import java.util.Optional;
 
 import static com.rbkmoney.testcontainers.annotations.ceph.CephTestcontainerFactory.ACCESS_KEY;
 import static com.rbkmoney.testcontainers.annotations.ceph.CephTestcontainerFactory.SECRET_KEY;
-import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
@@ -29,9 +29,15 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(CephTestcontainerFactory.container());
+            var container = CephTestcontainerFactory.container();
+            GenericContainerUtil.startContainer(container);
+            THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
-            init(CephTestcontainerFactory.singletonContainer());
+            var container = CephTestcontainerFactory.singletonContainer();
+            if (!container.isRunning()) {
+                GenericContainerUtil.startContainer(container);
+            }
+            THREAD_CONTAINER.set(container);
         }
     }
 
@@ -62,13 +68,6 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
 
     private static Optional<CephTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, CephTestcontainerSingleton.class);
-    }
-
-    private void init(GenericContainer<? extends GenericContainer<?>> container) {
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        THREAD_CONTAINER.set(container);
     }
 
     public static class CephTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
