@@ -22,4 +22,6 @@ public @interface ClickhouseTestcontainerSingleton {
      */
     String[] migrations();
 
+    String dbNameShouldBeDropped();
+
 }

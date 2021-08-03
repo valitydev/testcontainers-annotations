@@ -1,7 +1,9 @@
 package com.rbkmoney.testcontainers.annotations.clickhouse;
 
 import com.rbkmoney.clickhouse.initializer.ChInitializer;
+import com.rbkmoney.clickhouse.initializer.ConnectionManager;
 import com.rbkmoney.testcontainers.annotations.exception.ClickhouseStartingException;
+import com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -15,12 +17,11 @@ import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
 import org.testcontainers.containers.ClickHouseContainer;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
-import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.startContainer;
 
 @Slf4j
 public class ClickhouseTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
@@ -30,12 +31,20 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            init(
-                    ClickhouseTestcontainerFactory.container(),
-                    findPrototypeAnnotation(context).get().migrations()); //NOSONAR
+            var container = ClickhouseTestcontainerFactory.container();
+            GenericContainerUtil.startContainer(container);
+            appliedMigrations(container, findPrototypeAnnotation(context).get().migrations()); //NOSONAR
+            THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
-            String[] migrations = findSingletonAnnotation(context).get().migrations(); //NOSONAR
-            init(ClickhouseTestcontainerFactory.singletonContainer(), migrations);
+            var annotation = findSingletonAnnotation(context).get(); //NOSONAR
+            var container = ClickhouseTestcontainerFactory.singletonContainer();
+            if (!container.isRunning()) {
+                GenericContainerUtil.startContainer(container);
+            } else {
+                dropDatabase(annotation, container);
+            }
+            appliedMigrations(container, annotation.migrations());
+            THREAD_CONTAINER.set(container);
         }
     }
 
@@ -68,14 +77,6 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
         return AnnotationSupport.findAnnotation(testClass, ClickhouseTestcontainerSingleton.class);
     }
 
-    private void init(ClickHouseContainer container, String[] migrations) {
-        if (!container.isRunning()) {
-            startContainer(container);
-        }
-        appliedMigrations(container, migrations);
-        THREAD_CONTAINER.set(container);
-    }
-
     private void appliedMigrations(ClickHouseContainer container, String[] migrations) {
         try {
             ChInitializer.initAllScripts(container, Arrays.asList(migrations));
@@ -83,6 +84,18 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
         } catch (SQLException ex) {
             throw new ClickhouseStartingException(
                     "Error then applied " + migrations.length + " migrations, ",
+                    ex);
+        }
+    }
+
+    private void dropDatabase(ClickhouseTestcontainerSingleton annotation, ClickHouseContainer container) {
+        try (Connection connection = ConnectionManager.getSystemConn(container)) {
+            connection.createStatement().execute(
+                    String.format("DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
+            log.info(String.format("Successfully DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
+        } catch (SQLException ex) {
+            throw new ClickhouseStartingException(
+                    "Error then drop database dbName=" + annotation.dbNameShouldBeDropped() + ", ",
                     ex);
         }
     }
