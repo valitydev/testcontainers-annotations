@@ -17,6 +17,25 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * {@code @PostgresqlTestcontainerExtension} инициализирует тестконтейнер из {@link PostgresqlTestcontainerFactory},
+ * настраивает, стартует, валидирует и останавливает
+ * <p><h3>{@link PostgresqlTestcontainerContextCustomizerFactory}</h3>
+ * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
+ * под капотом аннотаций, на уровне реализации интерфейса  —
+ * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
+ * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
+ * приложения {@link ConfigurableApplicationContext}
+ * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
+ * в файле META-INF/spring.factories
+ *
+ * @see PostgresqlTestcontainerFactory PostgresqlTestcontainerFactory
+ * @see PostgresqlTestcontainerContextCustomizerFactory PostgresqlTestcontainerContextCustomizerFactory
+ * @see TestPropertyValues TestPropertyValues
+ * @see ConfigurableApplicationContext ConfigurableApplicationContext
+ * @see BeforeAllCallback BeforeAllCallback
+ * @see AfterAllCallback AfterAllCallback
+ */
 @Slf4j
 public class PostgresqlTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 

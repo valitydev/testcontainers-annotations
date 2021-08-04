@@ -12,6 +12,15 @@ import java.util.UUID;
 import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.getWaitStrategy;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * Фабрика по созданию контейнеров
+ * <p>{@link #create()} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ * <p>{@link #ACCESS_KEY} необходимо указать в файле application.yml при необходимости другого ключа
+ * <p>{@link #SECRET_KEY} необходимо указать в файле application.yml при необходимости другого ключа
+ *
+ * @see CephTestcontainerExtension CephTestcontainerExtension
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CephTestcontainerFactory {
 

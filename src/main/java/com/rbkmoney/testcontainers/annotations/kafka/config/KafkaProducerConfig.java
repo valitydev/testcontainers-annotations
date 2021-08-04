@@ -15,6 +15,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Конфиг для инциализации тестового продьюссера для тестирования трифтовых топиков
+ *
+ * @see KafkaProducer KafkaProducer
+ */
 @TestConfiguration
 public class KafkaProducerConfig {
 

@@ -11,6 +11,13 @@ import java.util.UUID;
 
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * Фабрика по созданию контейнеров
+ * <p>{@link #create()} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ *
+ * @see ClickhouseTestcontainerExtension ClickhouseTestcontainerExtension
+ */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ClickhouseTestcontainerFactory {

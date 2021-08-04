@@ -21,6 +21,25 @@ import static com.rbkmoney.testcontainers.annotations.minio.MinioTestcontainerFa
 import static com.rbkmoney.testcontainers.annotations.minio.MinioTestcontainerFactory.MINIO_USER;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * {@code @MinioTestcontainerExtension} инициализирует тестконтейнер из {@link MinioTestcontainerFactory},
+ * настраивает, стартует, валидирует и останавливает
+ * <p><h3>{@link MinioTestcontainerExtension.MinioTestcontainerContextCustomizerFactory}</h3>
+ * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
+ * под капотом аннотаций, на уровне реализации интерфейса  —
+ * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
+ * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
+ * приложения {@link ConfigurableApplicationContext}
+ * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
+ * в файле META-INF/spring.factories
+ *
+ * @see MinioTestcontainerFactory MinioTestcontainerFactory
+ * @see MinioTestcontainerExtension.MinioTestcontainerContextCustomizerFactory MinioTestcontainerContextCustomizerFactory
+ * @see TestPropertyValues TestPropertyValues
+ * @see ConfigurableApplicationContext ConfigurableApplicationContext
+ * @see BeforeAllCallback BeforeAllCallback
+ * @see AfterAllCallback AfterAllCallback
+ */
 @Slf4j
 public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 

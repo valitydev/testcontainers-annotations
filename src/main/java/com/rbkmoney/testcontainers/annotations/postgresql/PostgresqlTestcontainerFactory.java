@@ -10,6 +10,13 @@ import java.util.UUID;
 
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * Фабрика по созданию контейнеров
+ * <p>{@link #create()} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ *
+ * @see PostgresqlTestcontainerExtension PostgresqlTestcontainerExtension
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PostgresqlTestcontainerFactory {
 

@@ -31,6 +31,35 @@ import java.util.stream.Collectors;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadFromSpringApplicationPropertiesFile;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * {@code @KafkaTestcontainerExtension} инициализирует тестконтейнер из {@link KafkaTestcontainerFactory},
+ * настраивает, стартует, валидирует и останавливает
+ * <p><h3>{@link KafkaTestcontainerExtension.KafkaTestcontainerContextCustomizerFactory}</h3>
+ * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
+ * под капотом аннотаций, на уровне реализации интерфейса  —
+ * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
+ * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
+ * приложения {@link ConfigurableApplicationContext}
+ * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
+ * в файле META-INF/spring.factories
+ * <p><h3>Нюансы</h3>
+ * <p>Данное расширение немного сложнее других аналогичных в библиотеке за счет дополнительной работы с топиками
+ * <p>Работа заключается в загрузке имен топиков из файла с настройками спринга {@link #loadTopics(String[])},
+ * создании топиков через {@link AdminClient} в {@link #createTopics(KafkaContainer, List)},
+ * а также валидации результата создания через запрос '/usr/bin/kafka-topics --zookeeper localhost:2181 --list'
+ * напрямую в контейнере в {@link #execInContainerKafkaTopicsListCommand(KafkaContainer)}
+ * <p>Также помимо перечисленного, при работе расширения для создания синглтона перед запуском тестов
+ * в каждом файле будет проводится удаление созданных ранее топиков в {@link #deleteTopics(KafkaContainer, List)}
+ * и дальнейшее пересоздание топиков в {@link #createTopics(KafkaContainer, List)},
+ * таким образом обеспечивая изоляцию данных между файлами с тестами
+ *
+ * @see KafkaTestcontainerFactory KafkaTestcontainerFactory
+ * @see KafkaTestcontainerExtension.KafkaTestcontainerContextCustomizerFactory KafkaTestcontainerContextCustomizerFactory
+ * @see TestPropertyValues TestPropertyValues
+ * @see ConfigurableApplicationContext ConfigurableApplicationContext
+ * @see BeforeAllCallback BeforeAllCallback
+ * @see AfterAllCallback AfterAllCallback
+ */
 @Slf4j
 public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 

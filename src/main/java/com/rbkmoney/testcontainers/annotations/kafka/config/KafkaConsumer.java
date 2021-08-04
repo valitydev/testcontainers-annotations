@@ -1,6 +1,7 @@
 package com.rbkmoney.testcontainers.annotations.kafka.config;
 
 import com.rbkmoney.kafka.common.serialization.AbstractThriftDeserializer;
+import com.rbkmoney.testcontainers.annotations.kafka.KafkaTestcontainer;
 import lombok.RequiredArgsConstructor;
 import lombok.var;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -15,6 +16,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Листенер для чтения данных из тестового трифтового топика
+ * Для получения конкретного сообщения необходимо имплементировать в тесте интерфейс
+ * {@link MessageListener}
+ * <p>Пример использования {@link KafkaTestcontainer} с {@link com.rbkmoney.testcontainers.annotations.kafka.config.KafkaConsumer} — в
+ * <a href="https://github.com/rbkmoney/sink-drinker/blob/master/src/test/java/com/rbkmoney/sinkdrinker/kafka/KafkaSenderTest.java">sink-drinker</a>
+ * <p><h3>Пример</h3>
+ * <pre> {@code
+ *     @Autowired
+ *     private KafkaConsumer<Event> testPayoutEventKafkaConsumer;
+ *
+ *     ...
+ *
+ *     testPayoutEventKafkaConsumer.read(topicName, data -> readEvents.add(data.value()));
+ *     Unreliables.retryUntilTrue(TIMEOUT, TimeUnit.SECONDS, () -> readEvents.size() == expected);
+ *
+ *     ...
+ * }</pre>
+ *
+ * @see KafkaConsumerConfig KafkaConsumerConfig
+ */
 @RequiredArgsConstructor
 public class KafkaConsumer<T extends TBase<?, ?>> {
 

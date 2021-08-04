@@ -8,6 +8,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
+/**
+ * Конфиг для инциализации тестового консьюмера для тестирования трифтовых топиков
+ * В данный момент поддерживаются
+ * {@link SinkEvent}
+ * {@link Event}
+ * {@link Command}
+ *
+ * @see KafkaConsumer KafkaConsumer
+ */
 @TestConfiguration
 public class KafkaConsumerConfig {
 

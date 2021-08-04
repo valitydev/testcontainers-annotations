@@ -21,6 +21,25 @@ import static com.rbkmoney.testcontainers.annotations.ceph.CephTestcontainerFact
 import static com.rbkmoney.testcontainers.annotations.ceph.CephTestcontainerFactory.SECRET_KEY;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * {@code @CephTestcontainerExtension} инициализирует тестконтейнер из {@link CephTestcontainerFactory},
+ * настраивает, стартует, валидирует и останавливает
+ * <p><h3>{@link CephTestcontainerExtension.CephTestcontainerContextCustomizerFactory}</h3>
+ * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
+ * под капотом аннотаций, на уровне реализации интерфейса  —
+ * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
+ * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
+ * приложения {@link ConfigurableApplicationContext}
+ * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
+ * в файле META-INF/spring.factories
+ *
+ * @see CephTestcontainerFactory CephTestcontainerFactory
+ * @see CephTestcontainerExtension.CephTestcontainerContextCustomizerFactory CephTestcontainerContextCustomizerFactory
+ * @see TestPropertyValues TestPropertyValues
+ * @see ConfigurableApplicationContext ConfigurableApplicationContext
+ * @see BeforeAllCallback BeforeAllCallback
+ * @see AfterAllCallback AfterAllCallback
+ */
 @Slf4j
 public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 

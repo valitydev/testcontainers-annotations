@@ -12,6 +12,15 @@ import java.util.UUID;
 import static com.rbkmoney.testcontainers.annotations.util.GenericContainerUtil.getWaitStrategy;
 import static com.rbkmoney.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
+/**
+ * Фабрика по созданию контейнеров
+ * <p>{@link #create()} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ * <p>{@link #MINIO_USER} необходимо указать в файле application.yml при необходимости другого ключа
+ * <p>{@link #MINIO_PASSWORD} необходимо указать в файле application.yml при необходимости другого ключа
+ *
+ * @see MinioTestcontainerExtension MinioTestcontainerExtension
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MinioTestcontainerFactory {
 

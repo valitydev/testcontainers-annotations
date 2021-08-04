@@ -19,10 +19,42 @@ import org.testcontainers.containers.ClickHouseContainer;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * {@code @ClickhouseTestcontainerExtension} инициализирует тестконтейнер из {@link ClickhouseTestcontainerFactory},
+ * настраивает, стартует, валидирует и останавливает
+ * <p><h3>{@link ClickhouseTestcontainerExtension.ClickhouseTestcontainerContextCustomizerFactory}</h3>
+ * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
+ * под капотом аннотаций, на уровне реализации интерфейса  —
+ * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
+ * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
+ * приложения {@link ConfigurableApplicationContext}
+ * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
+ * в файле META-INF/spring.factories
+ * <p><h3>Нюансы</h3>
+ * <p>Дополнительно данное расширение накатывает
+ * файлы с миграциями {@link #appliedMigrations(ClickHouseContainer, String[])}
+ * при запуске тестконтейнера
+ * <p>Также помимо перечисленного, при работе расширения для создания синглтона перед запуском тестов
+ * в каждом файле будет проводится удаление базы данных
+ * в {@link #dropDatabase(ClickhouseTestcontainerSingleton, ClickHouseContainer)},
+ * которая ранее была указана в
+ * {@link ClickhouseTestcontainerSingleton#dbNameShouldBeDropped()},
+ * таким образом обеспечивая изоляцию данных между файлами с тестами
+ * <p>Для работы с миграциями используется авторская библиотека Константина Стружкина
+ * com.rbkmoney:clickhouse-test
+ *
+ * @see ClickhouseTestcontainerFactory ClickhouseTestcontainerFactory
+ * @see ClickhouseTestcontainerExtension.ClickhouseTestcontainerContextCustomizerFactory ClickhouseTestcontainerContextCustomizerFactory
+ * @see TestPropertyValues TestPropertyValues
+ * @see ConfigurableApplicationContext ConfigurableApplicationContext
+ * @see BeforeAllCallback BeforeAllCallback
+ * @see AfterAllCallback AfterAllCallback
+ */
 @Slf4j
 public class ClickhouseTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
@@ -90,8 +122,9 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
 
     private void dropDatabase(ClickhouseTestcontainerSingleton annotation, ClickHouseContainer container) {
         try (Connection connection = ConnectionManager.getSystemConn(container)) {
-            connection.createStatement().execute(
-                    String.format("DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(String.format("DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
+            }
             log.info(String.format("Successfully DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
         } catch (SQLException ex) {
             throw new ClickhouseStartingException(
