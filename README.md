@@ -22,11 +22,11 @@ minio/minio
 Базовые аннотации для использования:
 
 ```java
-@PostgresqlTestcontainer
-@KafkaTestcontainer
-@ClickhouseTestcontainer
-@CephTestcontainer
-@MinioTestcontainer
+@PostgresqlTestcontainer /@PostgresqlTestcontainerSingleton
+@KafkaTestcontainer /@KafkaTestcontainerSingleton
+@ClickhouseTestcontainer /@ClickhouseTestcontainerSingleton
+@CephTestcontainer /@CephTestcontainerSingleton
+@MinioTestcontainer /@MinioTestcontainerSingleton
 ```
 
 Для изменения `docker image tag`, который используется тестконтейнерами нужно переопределить параметры в `application.yml`:
@@ -44,9 +44,9 @@ testcontainers:
     accessKey: 'test'
     secretKey: 'test'
   minio:
-    tag: 'latest'
-    user: 'user'
-    password: 'password'
+    tag: 'RELEASE.2021-10-13T00-23-17Z'
+    user: 'minio'
+    password: 'minio123'
 ```
 
 Eсли параметр не указан библиотека будет использовать параметры по умолчанию, указанные в репозитории в

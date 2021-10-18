@@ -10,6 +10,6 @@ testcontainers:
     accessKey: 'test'
     secretKey: 'test'
   minio:
-    tag: 'latest'
-    user: 'user'
-    password: 'password'
+    tag: 'RELEASE.2021-10-13T00-23-17Z'
+    user: 'minio'
+    password: 'minio123'

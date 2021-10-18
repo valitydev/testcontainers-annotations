@@ -26,7 +26,7 @@ public class MinioTestcontainerFactory {
 
     public static final String MINIO_USER = "testcontainers.minio.user";
     public static final String MINIO_PASSWORD = "testcontainers.minio.password";
-    private static final String MINIO_IMAGE_NAME = "minio/minio";
+    private static final String MINIO_IMAGE_NAME = "quay.io/minio/minio";
     private static final String TAG_PROPERTY = "testcontainers.minio.tag";
 
     private GenericContainer<?> minioContainer;
@@ -61,7 +61,7 @@ public class MinioTestcontainerFactory {
                 .withNetworkAliases("minio-" + UUID.randomUUID())
                 .withEnv("MINIO_ROOT_USER", loadDefaultLibraryProperty(MINIO_USER))
                 .withEnv("MINIO_ROOT_PASSWORD", loadDefaultLibraryProperty(MINIO_PASSWORD))
-                .withCommand("server /data")
+                .withCommand("server /data{1...12}")
                 .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)))) {
             return container;
         }

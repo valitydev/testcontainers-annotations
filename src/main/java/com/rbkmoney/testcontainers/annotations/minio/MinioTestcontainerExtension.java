@@ -100,18 +100,12 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
                     var annotation = findPrototypeAnnotation(testClass).get(); //NOSONAR
                     init(
                             context,
-                            annotation.signingRegion(),
-                            annotation.clientProtocol(),
-                            annotation.clientMaxErrorRetry(),
                             annotation.bucketName(),
                             annotation.properties());
                 } else {
                     findSingletonAnnotation(testClass).ifPresent(
                             annotation -> init(
                                     context,
-                                    annotation.signingRegion(),
-                                    annotation.clientProtocol(),
-                                    annotation.clientMaxErrorRetry(),
                                     annotation.bucketName(),
                                     annotation.properties()));
                 }
@@ -120,21 +114,35 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
 
         private void init(
                 ConfigurableApplicationContext context,
-                String signingRegion,
-                String clientProtocol,
-                String clientMaxErrorRetry,
                 String bucketName,
                 String[] properties) {
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
+                    // deprecated
                     "storage.endpoint=" + container.getContainerIpAddress() + ":" +
                             container.getMappedPort(9000),
-                    "storage.signingRegion=" + signingRegion,
+//                    "storage.signingRegion=" + signingRegion,
                     "storage.accessKey=" + loadDefaultLibraryProperty(MINIO_USER),
                     "storage.secretKey=" + loadDefaultLibraryProperty(MINIO_PASSWORD),
-                    "storage.clientProtocol=" + clientProtocol,
-                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
-                    "storage.bucketName=" + bucketName)
+//                    "storage.clientProtocol=" + clientProtocol,
+//                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
+                    "storage.bucketName=" + bucketName,
+                    // --
+                    "s3.endpoint=" + container.getContainerIpAddress() + ":" + container.getMappedPort(9000),
+                    "s3.bucket-name=" + bucketName,
+//                    "s3.signing-region=" + signingRegion,
+//                    "s3.client-protocol=" + clientProtocol,
+//                    "s3.client-max-error-retry=" + clientMaxErrorRetry,
+//                    "s3.signer-override=" + signerOverride,
+                    "s3.access-key=" + loadDefaultLibraryProperty(MINIO_USER),
+                    "s3.secret-key=" + loadDefaultLibraryProperty(MINIO_PASSWORD),
+                    "s3-sdk-v2.enabled=false",
+                    "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
+                            container.getMappedPort(9000)),
+                    "s3-sdk-v2.bucket-name=" + bucketName,
+//                    "s3-sdk-v2.region=" + signingRegion,
+                    "s3-sdk-v2.access-key=" + loadDefaultLibraryProperty(MINIO_USER),
+                    "s3-sdk-v2.secret-key=" + loadDefaultLibraryProperty(MINIO_PASSWORD))
                     .and(properties)
                     .applyTo(context);
         }

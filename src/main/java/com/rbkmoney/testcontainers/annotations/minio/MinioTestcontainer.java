@@ -52,24 +52,9 @@ public @interface MinioTestcontainer {
     /**
      * Аналогичный параметр как у аннотации {@link SpringBootTest#properties()}
      * <p>
-     * пример — properties = {"postgresql.make.happy=true",...}
+     * пример — properties = {"minio.make.happy=true",...}
      */
     String[] properties() default {};
-
-    /**
-     * параметр для инициализации s3 client
-     */
-    String signingRegion() default "RU";
-
-    /**
-     * параметр для инициализации s3 client
-     */
-    String clientProtocol() default "HTTP";
-
-    /**
-     * параметр для инициализации s3 client
-     */
-    String clientMaxErrorRetry() default "10";
 
     /**
      * параметр для инициализации s3 client
