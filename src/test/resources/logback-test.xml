@@ -5,7 +5,7 @@
     <root level="info">
         <appender-ref ref="CONSOLE"/>
     </root>
-    <logger name="com.rbkmoney.testcontainers.annotations">
+    <logger name="dev.vality.testcontainers.annotations">
         <level value="info"/>
     </logger>
     <logger name="org.apache.kafka">

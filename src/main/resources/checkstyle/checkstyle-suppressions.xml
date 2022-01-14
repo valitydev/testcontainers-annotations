@@ -6,5 +6,5 @@
 
 <suppressions>
     <suppress checks="LineLength"
-              files="com[\\/]rbkmoney[\\/]testcontainers[\\/]annotations[\\/].*.java"/>
+              files="dev[\\/]vality[\\/]testcontainers[\\/]annotations[\\/].*.java"/>
 </suppressions>
