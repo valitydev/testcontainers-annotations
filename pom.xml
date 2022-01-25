@@ -59,9 +59,9 @@
             <version>${woody.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.rbkmoney</groupId>
+            <groupId>dev.vality</groupId>
             <artifactId>payout-manager-proto</artifactId>
-            <version>1.21-bdd9888</version>
+            <version>1.25-cfe2120</version>
         </dependency>
         <dependency>
             <groupId>com.rbkmoney</groupId>
