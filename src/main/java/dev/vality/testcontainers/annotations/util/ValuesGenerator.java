@@ -10,11 +10,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-
-import static java.time.LocalDateTime.now;
-import static java.time.ZoneId.systemDefault;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValuesGenerator {
@@ -28,7 +27,7 @@ public class ValuesGenerator {
     }
 
     public static String generateDate() {
-        return TypeUtil.temporalToString(LocalDateTime.now());
+        return TypeUtil.temporalToString(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
     }
 
     public static Long generateLong() {
@@ -44,15 +43,23 @@ public class ValuesGenerator {
     }
 
     public static LocalDateTime generateLocalDateTime() {
-        return RandomBeans.random(LocalDateTime.class);
+        return RandomBeans.random(LocalDateTime.class).truncatedTo(ChronoUnit.MICROS);
+    }
+
+    public static Instant generateInstant() {
+        return RandomBeans.random(Instant.class).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant generateCurrentTimePlusDay() {
-        return now().plusDays(1).toInstant(getZoneOffset());
+        return LocalDateTime.now().plusDays(1).toInstant(getZoneOffset()).truncatedTo(ChronoUnit.MICROS);
+    }
+
+    public static Instant generateCurrentTimePlusSecond() {
+        return LocalDateTime.now().plusSeconds(1).toInstant(getZoneOffset()).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static ZoneOffset getZoneOffset() {
-        return systemDefault().getRules().getOffset(now());
+        return ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now());
     }
 
     public static String getContent(InputStream content) throws IOException {
@@ -60,18 +67,18 @@ public class ValuesGenerator {
     }
 
     public static LocalDateTime getFromTime() {
-        return fromTime;
+        return fromTime.truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getToTime() {
-        return toTime;
+        return toTime.truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getInFromToPeriodTime() {
-        return inFromToPeriodTime;
+        return inFromToPeriodTime.truncatedTo(ChronoUnit.MICROS);
     }
 
-    public static Instant generateCurrentTimePlusSecond() {
-        return LocalDateTime.now().plusSeconds(1).toInstant(getZoneOffset());
+    public static Instant getCurrentInstant() {
+        return Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 }

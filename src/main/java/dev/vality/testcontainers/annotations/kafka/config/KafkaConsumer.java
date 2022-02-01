@@ -1,6 +1,6 @@
 package dev.vality.testcontainers.annotations.kafka.config;
 
-import com.rbkmoney.kafka.common.serialization.AbstractThriftDeserializer;
+import dev.vality.kafka.common.serialization.AbstractThriftDeserializer;
 import dev.vality.testcontainers.annotations.kafka.KafkaTestcontainer;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
