@@ -1,8 +1,7 @@
 package dev.vality.testcontainers.annotations;
 
-import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumerConfig;
-import dev.vality.testcontainers.annotations.kafka.config.KafkaProducerConfig;
 import dev.vality.testcontainers.annotations.kafka.KafkaTestcontainer;
+import dev.vality.testcontainers.annotations.kafka.config.KafkaProducerConfig;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -17,20 +16,16 @@ import java.lang.annotation.Target;
  * набор аннотаций, используемых с {@link SpringBootTest} при тестировании спринговых приложений,
  * которые расположены в обертке {@link DefaultSpringBootTest}
  * и дополнительными подключенными конфигами
- * {@link KafkaProducerConfig} и {@link KafkaConsumerConfig}, которые содержат удобные инструменты
+ * {@link KafkaProducerConfig}, которые содержат удобные инструменты
  * для тестирования консьюмеров и продъюсеров
  *
  * @see KafkaTestcontainer @KafkaTestcontainer
  * @see KafkaProducerConfig KafkaProducerConfig
- * @see KafkaConsumerConfig KafkaConsumerConfig
  * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @DefaultSpringBootTest
-@ContextConfiguration(
-        classes = {
-                KafkaProducerConfig.class,
-                KafkaConsumerConfig.class})
+@ContextConfiguration(classes = {KafkaProducerConfig.class})
 public @interface KafkaSpringBootTest {
 }
