@@ -1,11 +1,11 @@
 package dev.vality.testcontainers.annotations.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.rbkmoney.geck.serializer.kit.json.JsonHandler;
-import com.rbkmoney.geck.serializer.kit.json.JsonProcessor;
-import com.rbkmoney.geck.serializer.kit.tbase.TBaseHandler;
-import com.rbkmoney.geck.serializer.kit.tbase.TBaseProcessor;
-import com.rbkmoney.machinegun.msgpack.Value;
+import dev.vality.geck.serializer.kit.json.JsonHandler;
+import dev.vality.geck.serializer.kit.json.JsonProcessor;
+import dev.vality.geck.serializer.kit.tbase.TBaseHandler;
+import dev.vality.geck.serializer.kit.tbase.TBaseProcessor;
+import dev.vality.machinegun.msgpack.Value;
 import lombok.SneakyThrows;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TSerializer;

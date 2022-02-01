@@ -1,6 +1,6 @@
 package dev.vality.testcontainers.annotations.util;
 
-import com.rbkmoney.geck.common.util.TypeUtil;
+import dev.vality.geck.common.util.TypeUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;

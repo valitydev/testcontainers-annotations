@@ -1,7 +1,7 @@
 package dev.vality.testcontainers.annotations.clickhouse;
 
-import com.rbkmoney.clickhouse.initializer.ChInitializer;
-import com.rbkmoney.clickhouse.initializer.ConnectionManager;
+import dev.vality.clickhouse.initializer.ChInitializer;
+import dev.vality.clickhouse.initializer.ConnectionManager;
 import dev.vality.testcontainers.annotations.exception.ClickhouseStartingException;
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
