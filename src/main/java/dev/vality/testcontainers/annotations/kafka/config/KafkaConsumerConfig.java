@@ -1,8 +1,8 @@
 package dev.vality.testcontainers.annotations.kafka.config;
 
-import dev.vality.damsel.fraudbusters.Command;
-import com.rbkmoney.kafka.common.serialization.AbstractThriftDeserializer;
 import com.rbkmoney.machinegun.eventsink.SinkEvent;
+import dev.vality.damsel.fraudbusters.Command;
+import dev.vality.kafka.common.serialization.AbstractThriftDeserializer;
 import dev.vality.payout.manager.Event;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
