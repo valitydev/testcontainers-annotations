@@ -27,7 +27,7 @@ public class ValuesGenerator {
     }
 
     public static String generateDate() {
-        return TypeUtil.temporalToString(LocalDateTime.now());
+        return TypeUtil.temporalToString(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
     }
 
     public static Long generateLong() {
@@ -43,7 +43,7 @@ public class ValuesGenerator {
     }
 
     public static LocalDateTime generateLocalDateTime() {
-        return RandomBeans.random(LocalDateTime.class);
+        return RandomBeans.random(LocalDateTime.class).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant generateInstant() {
@@ -67,15 +67,15 @@ public class ValuesGenerator {
     }
 
     public static LocalDateTime getFromTime() {
-        return fromTime;
+        return fromTime.truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getToTime() {
-        return toTime;
+        return toTime.truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getInFromToPeriodTime() {
-        return inFromToPeriodTime;
+        return inFromToPeriodTime.truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant getCurrentInstant() {
