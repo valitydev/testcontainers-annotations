@@ -172,7 +172,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     }
 
     private String execInContainerKafkaTopicsListCommand(KafkaContainer container) {
-        var kafkaTopicsListCommand = "/usr/bin/kafka-topics --zookeeper localhost:2181 --list";
+        var kafkaTopicsListCommand = "/usr/bin/kafka-topics --bootstrap-server localhost:9092 --list";
         try {
             var stdout = container.execInContainer("/bin/sh", "-c", kafkaTopicsListCommand)
                     .getStdout();
