@@ -206,6 +206,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
                     "kafka.bootstrap-servers=" + container.getBootstrapServers(),
+                            "spring.kafka.bootstrap-servers=" + container.getBootstrapServers(),
                     "kafka.ssl.enabled=false")
                     .and(properties)
                     .applyTo(context);

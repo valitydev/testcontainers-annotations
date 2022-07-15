@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.util.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +24,18 @@ import java.util.UUID;
 @TestConfiguration
 public class KafkaProducerConfig {
 
-    @Value("${kafka.bootstrap-servers}")
-    private String bootstrapAddress;
-
     @Bean
-    public KafkaProducer<TBase<?, ?>> testThriftKafkaProducer() {
-        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory()));
+    public String bootstrapAddress(@Value("${spring.kafka.bootstrap-servers:}") String primaryLocation,
+                                   @Value("${kafka.bootstrap-servers:}") String secondaryLocation) {
+        return !ObjectUtils.isEmpty(primaryLocation) ? primaryLocation : secondaryLocation;
     }
 
-    private ProducerFactory<String, TBase<?, ?>> thriftProducerFactory() {
+    @Bean
+    public KafkaProducer<TBase<?, ?>> testThriftKafkaProducer(String bootstrapAddress) {
+        return new KafkaProducer<>(new KafkaTemplate<>(thriftProducerFactory(bootstrapAddress)));
+    }
+
+    private ProducerFactory<String, TBase<?, ?>> thriftProducerFactory(String bootstrapAddress) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
