@@ -36,4 +36,13 @@ public class KafkaProducer<T> {
                 .join();
         kafkaTemplate.getProducerFactory().reset();
     }
+
+    public void send(String topic, String key, T payload) {
+        log.info("Sending key='{}' payload='{}' to topic='{}'", key, payload, topic);
+        kafkaTemplate.send(topic, key, payload)
+                .completable()
+                .join();
+        kafkaTemplate.getProducerFactory().reset();
+    }
+
 }
