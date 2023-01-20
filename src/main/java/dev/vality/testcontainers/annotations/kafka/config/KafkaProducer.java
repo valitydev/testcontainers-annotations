@@ -32,7 +32,6 @@ public class KafkaProducer<T> {
     public void send(String topic, T payload) {
         log.info("Sending payload='{}' to topic='{}'", payload, topic);
         kafkaTemplate.send(topic, payload)
-                .completable()
                 .join();
         kafkaTemplate.getProducerFactory().reset();
     }
@@ -40,7 +39,6 @@ public class KafkaProducer<T> {
     public void send(String topic, String key, T payload) {
         log.info("Sending key='{}' payload='{}' to topic='{}'", key, payload, topic);
         kafkaTemplate.send(topic, key, payload)
-                .completable()
                 .join();
         kafkaTemplate.getProducerFactory().reset();
     }
