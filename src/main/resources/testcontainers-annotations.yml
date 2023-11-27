@@ -13,3 +13,5 @@ testcontainers:
     tag: 'RELEASE.2021-10-13T00-23-17Z'
     user: 'minio'
     password: 'minio123'
+  opensearch:
+    tag: '2.0.0'

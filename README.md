@@ -17,17 +17,19 @@ confluentinc/cp-kafka
 yandex/clickhouse-server
 ceph/daemon
 minio/minio
+opensearchproject/opensearch
 ```
 
 Базовые аннотации для использования:
 
-```java
-@PostgresqlTestcontainer /@PostgresqlTestcontainerSingleton
-@KafkaTestcontainer /@KafkaTestcontainerSingleton
-@ClickhouseTestcontainer /@ClickhouseTestcontainerSingleton
-@CephTestcontainer /@CephTestcontainerSingleton
-@MinioTestcontainer /@MinioTestcontainerSingleton
-```
+| basic                    | singleton                         |
+|--------------------------|-----------------------------------|
+| @PostgresqlTestcontainer | @PostgresqlTestcontainerSingleton |
+| @KafkaTestcontainer      | @KafkaTestcontainerSingleton      |
+| @ClickhouseTestcontainer | @ClickhouseTestcontainerSingleton |
+| @CephTestcontainer       | @CephTestcontainerSingleton       |
+| @MinioTestcontainer      | @MinioTestcontainerSingleton      |
+| @OpensearchTestcontainer | @OpensearchTestcontainerSingleton |
 
 Для изменения `docker image tag`, который используется тестконтейнерами нужно переопределить параметры в `application.yml`:
 
@@ -47,6 +49,8 @@ testcontainers:
     tag: 'RELEASE.2021-10-13T00-23-17Z'
     user: 'minio'
     password: 'minio123'
+  opensearch:
+    tag: '2.0.0'
 ```
 
 Eсли параметр не указан библиотека будет использовать параметры по умолчанию, указанные в репозитории в

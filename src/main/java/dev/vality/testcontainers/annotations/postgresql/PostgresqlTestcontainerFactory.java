@@ -23,7 +23,7 @@ public class PostgresqlTestcontainerFactory {
     private static final String POSTGRESQL_IMAGE_NAME = "postgres";
     private static final String TAG_PROPERTY = "testcontainers.postgresql.tag";
 
-    private PostgreSQLContainer<?> postgreSqlContainer;
+    private PostgreSQLContainer<?> postgresqlContainer;
 
     public static PostgreSQLContainer<?> container() {
         return instance().create();
@@ -39,11 +39,11 @@ public class PostgresqlTestcontainerFactory {
 
     @Synchronized
     private PostgreSQLContainer<?> getOrCreateSingletonContainer() {
-        if (postgreSqlContainer != null) {
-            return postgreSqlContainer;
+        if (postgresqlContainer != null) {
+            return postgresqlContainer;
         }
-        postgreSqlContainer = create();
-        return postgreSqlContainer;
+        postgresqlContainer = create();
+        return postgresqlContainer;
     }
 
     private PostgreSQLContainer<?> create() {
