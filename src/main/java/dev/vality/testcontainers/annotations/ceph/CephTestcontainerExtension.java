@@ -118,7 +118,7 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
                     // deprecated
-                    "storage.endpoint=" + container.getContainerIpAddress() + ":" +
+                            "storage.endpoint=" + container.getHost() + ":" +
                             container.getMappedPort(8080),
 //                    "storage.signingRegion=" + signingRegion,
                     "storage.accessKey=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
@@ -127,7 +127,7 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
 //                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
                     "storage.bucketName=" + bucketName,
                     // --
-                    "s3.endpoint=" + container.getContainerIpAddress() + ":" + container.getMappedPort(8080),
+                            "s3.endpoint=" + container.getHost() + ":" + container.getMappedPort(8080),
                     "s3.bucket-name=" + bucketName,
 //                    "s3.signing-region=" + signingRegion,
 //                    "s3.client-protocol=" + clientProtocol,

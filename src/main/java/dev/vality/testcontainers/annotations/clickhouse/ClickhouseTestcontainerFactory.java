@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.ClickHouseContainer;
+import org.testcontainers.clickhouse.ClickHouseContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.UUID;
@@ -22,7 +22,7 @@ import static dev.vality.testcontainers.annotations.util.SpringApplicationProper
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ClickhouseTestcontainerFactory {
 
-    private static final String CLICKHOUSE_IMAGE_NAME = "yandex/clickhouse-server";
+    private static final String CLICKHOUSE_IMAGE_NAME = "clickhouse/clickhouse-server";
     private static final String TAG_PROPERTY = "testcontainers.clickhouse.tag";
 
     private ClickHouseContainer clickHouseContainer;

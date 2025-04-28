@@ -1,7 +1,7 @@
 package dev.vality.testcontainers.annotations.clickhouse;
 
-import dev.vality.clickhouse.initializer.ChInitializer;
-import dev.vality.clickhouse.initializer.ConnectionManager;
+import dev.vality.testcontainers.annotations.clickhouse.util.ChInitializer;
+import dev.vality.testcontainers.annotations.clickhouse.util.ConnectionManager;
 import dev.vality.testcontainers.annotations.exception.ClickhouseStartingException;
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
-import org.testcontainers.containers.ClickHouseContainer;
+import org.testcontainers.clickhouse.ClickHouseContainer;
 
 import java.sql.Connection;
 import java.sql.SQLException;

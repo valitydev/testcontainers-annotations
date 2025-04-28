@@ -116,7 +116,7 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
                     // deprecated
-                    "storage.endpoint=" + container.getContainerIpAddress() + ":" +
+                            "storage.endpoint=" + container.getHost() + ":" +
                             container.getMappedPort(9000),
 //                    "storage.signingRegion=" + signingRegion,
                     "storage.accessKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
@@ -125,7 +125,7 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
 //                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
                     "storage.bucketName=" + bucketName,
                     // --
-                    "s3.endpoint=" + container.getContainerIpAddress() + ":" + container.getMappedPort(9000),
+                            "s3.endpoint=" + container.getHost() + ":" + container.getMappedPort(9000),
                     "s3.bucket-name=" + bucketName,
 //                    "s3.signing-region=" + signingRegion,
 //                    "s3.client-protocol=" + clientProtocol,

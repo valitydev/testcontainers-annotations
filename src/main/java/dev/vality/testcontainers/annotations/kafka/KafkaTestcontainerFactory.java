@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.UUID;
@@ -53,7 +53,6 @@ public class KafkaTestcontainerFactory {
                 DockerImageName
                         .parse(KAFKA_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
-                .withEmbeddedZookeeper()
                 .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")) {
             container.withNetworkAliases("cp-kafka-" + UUID.randomUUID());
             return container;
