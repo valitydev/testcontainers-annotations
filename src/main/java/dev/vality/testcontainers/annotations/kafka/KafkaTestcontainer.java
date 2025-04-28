@@ -1,9 +1,9 @@
 package dev.vality.testcontainers.annotations.kafka;
 
 import dev.vality.testcontainers.annotations.KafkaSpringBootTest;
-import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
+import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainer;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @KafkaTestcontainer} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.KafkaContainer}, также
+ * {@link org.testcontainers.containers.GenericContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации {@link KafkaTestcontainer#topicsKeys()}
  * <p>Пример использования {@link KafkaTestcontainer} с {@link KafkaProducer} — в

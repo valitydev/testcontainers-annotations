@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
@@ -58,11 +59,12 @@ public class MinioTestcontainerFactory {
                         .parse(MINIO_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
                 .withExposedPorts(9000)
-                .withNetworkAliases("minio-" + UUID.randomUUID())
                 .withEnv("MINIO_ROOT_USER", loadDefaultLibraryProperty(MINIO_USER))
                 .withEnv("MINIO_ROOT_PASSWORD", loadDefaultLibraryProperty(MINIO_PASSWORD))
                 .withCommand("server /data{1...12}")
                 .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)))) {
+            container.withNetworkAliases("minio-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             return container;
         }
     }

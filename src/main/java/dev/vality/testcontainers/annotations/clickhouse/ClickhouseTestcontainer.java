@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @ClickhouseTestcontainer} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.ClickHouseContainer}, также
+ * {@link org.testcontainers.clickhouse.ClickHouseContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации {@link ClickhouseTestcontainer#migrations()}
  * <p>Пример использования в коде — в
@@ -58,7 +58,7 @@ import java.lang.annotation.Target;
  * @see ClickhouseTestcontainerSingleton @ClickhouseTestcontainerSingleton
  * @see ExtendWith @ExtendWith
  * @see ClickhouseTestcontainerExtension ClickhouseTestcontainerExtension
- * @see org.testcontainers.containers.ClickHouseContainer ClickHouseContainer
+ * @see org.testcontainers.clickhouse.ClickHouseContainer ClickHouseContainer
  * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})

@@ -17,7 +17,7 @@ public class ChInitializer {
             ClickHouseContainer clickHouseContainer,
             List<String> scriptsFilePaths) throws SQLException {
         if (scriptsFilePaths != null && !scriptsFilePaths.isEmpty()) {
-            try (Connection connection = ConnectionManager.getSystemConn(clickHouseContainer)) {
+            try (var connection = ConnectionManager.getSystemConn(clickHouseContainer)) {
                 scriptsFilePaths.forEach(path -> execAllInFile(connection, path));
             }
         }
@@ -25,9 +25,9 @@ public class ChInitializer {
 
     public static void execAllInFile(Connection connection, String path) {
         try {
-            String sql = FileUtil.getFile(path);
-            String[] split = sql.split(";");
-            for (String exec : split) {
+            var sql = FileUtil.getFile(path);
+            var split = sql.split(";");
+            for (var exec : split) {
                 if (exec != null && !exec.trim().isEmpty()) {
                     connection.createStatement().execute(exec);
                 }

@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.clickhouse.ClickHouseContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.UUID;
@@ -49,11 +50,12 @@ public class ClickhouseTestcontainerFactory {
     }
 
     private ClickHouseContainer create() {
-        try (ClickHouseContainer container = new ClickHouseContainer(
+        try (var container = new ClickHouseContainer(
                 DockerImageName
                         .parse(CLICKHOUSE_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
             container.withNetworkAliases("clickhouse-server-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             return container;
         }
     }

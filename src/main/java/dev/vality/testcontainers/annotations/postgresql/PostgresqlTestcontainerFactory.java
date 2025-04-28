@@ -3,6 +3,7 @@ package dev.vality.testcontainers.annotations.postgresql;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -47,11 +48,12 @@ public class PostgresqlTestcontainerFactory {
     }
 
     private PostgreSQLContainer<?> create() {
-        try (PostgreSQLContainer<?> container = new PostgreSQLContainer<>(
+        try (var container = new PostgreSQLContainer<>(
                 DockerImageName
                         .parse(POSTGRESQL_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
             container.withNetworkAliases("postgres-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             return container;
         }
     }

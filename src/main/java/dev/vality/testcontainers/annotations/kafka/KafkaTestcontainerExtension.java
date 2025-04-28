@@ -16,7 +16,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,12 +44,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p><h3>Нюансы</h3>
  * <p>Данное расширение немного сложнее других аналогичных в библиотеке за счет дополнительной работы с топиками
  * <p>Работа заключается в загрузке имен топиков из файла с настройками спринга {@link #loadTopics(String[])},
- * создании топиков через {@link AdminClient} в {@link #createTopics(KafkaContainer, List)},
+ * создании топиков через {@link AdminClient} в {@link #createTopics(GenericContainer, List)},
  * а также валидации результата создания через запрос '/usr/bin/kafka-topics --zookeeper localhost:2181 --list'
- * напрямую в контейнере в {@link #execInContainerKafkaTopicsListCommand(KafkaContainer)}
+ * напрямую в контейнере в {@link #execInContainerKafkaTopicsListCommand(GenericContainer)}
  * <p>Также помимо перечисленного, при работе расширения для создания синглтона перед запуском тестов
- * в каждом файле будет проводится удаление созданных ранее топиков в {@link #deleteTopics(KafkaContainer, List)}
- * и дальнейшее пересоздание топиков в {@link #createTopics(KafkaContainer, List)},
+ * в каждом файле будет проводится удаление созданных ранее топиков в {@link #deleteTopics(GenericContainer, List)}
+ * и дальнейшее пересоздание топиков в {@link #createTopics(GenericContainer, List)},
  * таким образом обеспечивая изоляцию данных между файлами с тестами
  *
  * @see KafkaTestcontainerFactory KafkaTestcontainerFactory
@@ -62,7 +62,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private static final ThreadLocal<KafkaContainer> THREAD_CONTAINER = new ThreadLocal<>();
+    public static final int KAFKA_PORT = 9092;
+    private static final ThreadLocal<GenericContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
     public void beforeAll(ExtensionContext context) {
@@ -121,7 +122,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 .collect(Collectors.toList());
     }
 
-    private void createTopics(KafkaContainer container, List<String> topics) {
+    private void createTopics(GenericContainer<?> container, List<String> topics) {
         try (var admin = createAdminClient(container)) {
             var newTopics = topics.stream()
                     .map(topic -> new NewTopic(topic, 1, (short) 1))
@@ -145,7 +146,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
         }
     }
 
-    private void deleteTopics(KafkaContainer container, List<String> topics) {
+    private void deleteTopics(GenericContainer<?> container, List<String> topics) {
         try (var admin = createAdminClient(container)) {
             var topicsResult = admin.deleteTopics(topics);
             // wait until everyone is deleted or timeout
@@ -165,19 +166,18 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
         }
     }
 
-    private AdminClient createAdminClient(KafkaContainer container) {
+    private AdminClient createAdminClient(GenericContainer<?> container) {
         var properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, container.getBootstrapServers());
+        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getBootstrapServers(container));
         return AdminClient.create(properties);
     }
 
-    private String execInContainerKafkaTopicsListCommand(KafkaContainer container) {
-        var kafkaTopicsListCommand = "/usr/bin/kafka-topics --bootstrap-server localhost:9092 --list";
+    private String execInContainerKafkaTopicsListCommand(GenericContainer<?> container) {
+        var kafkaTopicsListCommand = "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server localhost:" + KAFKA_PORT + " --list";
         try {
-            var stdout = container.execInContainer("/bin/sh", "-c", kafkaTopicsListCommand)
+            var stdout = container.execInContainer("/bin/bash", "-c", kafkaTopicsListCommand)
                     .getStdout();
-            log.info("Topics list from '/usr/bin/kafka-topics': " +
-                    "[" + stdout.replace("\n", ",") + "]");
+            log.info("Topics list from '/opt/bitnami/kafka/bin/kafka-topics.sh': [{}]", stdout.replace("\n", ","));
             return stdout;
         } catch (IOException ex) {
             throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
@@ -185,6 +185,10 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             Thread.currentThread().interrupt();
             throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
         }
+    }
+
+    private static String getBootstrapServers(GenericContainer<?> container) {
+        return "PLAINTEXT://" + container.getHost() + ":" + container.getMappedPort(KAFKA_PORT);
     }
 
     public static class KafkaTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -205,8 +209,8 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
         private void init(ConfigurableApplicationContext context, String[] properties) {
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
-                            "kafka.bootstrap-servers=" + container.getBootstrapServers(),
-                            "spring.kafka.bootstrap-servers=" + container.getBootstrapServers(),
+                            "kafka.bootstrap-servers=" + getBootstrapServers(container),
+                            "spring.kafka.bootstrap-servers=" + getBootstrapServers(container),
                             "kafka.ssl.enabled=false")
                     .and(properties)
                     .applyTo(context);

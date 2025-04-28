@@ -115,31 +115,31 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 String[] properties) {
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
-                    // deprecated
+                            // deprecated
                             "storage.endpoint=" + container.getHost() + ":" +
-                            container.getMappedPort(9000),
+                                    container.getMappedPort(9000),
 //                    "storage.signingRegion=" + signingRegion,
-                    "storage.accessKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                    "storage.secretKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
+                            "storage.accessKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
+                            "storage.secretKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
 //                    "storage.clientProtocol=" + clientProtocol,
 //                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
-                    "storage.bucketName=" + bucketName,
-                    // --
+                            "storage.bucketName=" + bucketName,
+                            // --
                             "s3.endpoint=" + container.getHost() + ":" + container.getMappedPort(9000),
-                    "s3.bucket-name=" + bucketName,
+                            "s3.bucket-name=" + bucketName,
 //                    "s3.signing-region=" + signingRegion,
 //                    "s3.client-protocol=" + clientProtocol,
 //                    "s3.client-max-error-retry=" + clientMaxErrorRetry,
 //                    "s3.signer-override=" + signerOverride,
-                    "s3.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                    "s3.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
-                    "s3-sdk-v2.enabled=false",
-                    "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
-                            container.getMappedPort(9000)),
-                    "s3-sdk-v2.bucket-name=" + bucketName,
+                            "s3.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
+                            "s3.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
+                            "s3-sdk-v2.enabled=false",
+                            "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
+                                    container.getMappedPort(9000)),
+                            "s3-sdk-v2.bucket-name=" + bucketName,
 //                    "s3-sdk-v2.region=" + signingRegion,
-                    "s3-sdk-v2.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                    "s3-sdk-v2.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD))
+                            "s3-sdk-v2.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
+                            "s3-sdk-v2.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD))
                     .and(properties)
                     .applyTo(context);
         }

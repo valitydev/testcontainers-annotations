@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
@@ -52,12 +53,11 @@ public class CephTestcontainerFactory {
     }
 
     private GenericContainer<?> create() {
-        try (GenericContainer<?> container = new GenericContainer<>(
+        try (var container = new GenericContainer<>(
                 DockerImageName
                         .parse(CEPH_DAEMON_IMAGE_NAME)
                         .withTag(SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(TAG_PROPERTY)))
                 .withExposedPorts(5000, 8080)
-                .withNetworkAliases("ceph-daemon-" + UUID.randomUUID())
                 .withEnv("RGW_NAME", "localhost")
                 .withEnv("NETWORK_AUTO_DETECT", "4")
                 .withEnv("CEPH_DAEMON", "demo")
@@ -66,6 +66,8 @@ public class CephTestcontainerFactory {
                 .withEnv("CEPH_DEMO_SECRET_KEY", SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY))
                 .withEnv("CEPH_DEMO_BUCKET", "TEST")
                 .waitingFor(GenericContainerUtil.getWaitStrategy("/api/v0.1/health", 200, 5000, Duration.ofMinutes(1)))) {
+            container.withNetworkAliases("ceph-daemon-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             return container;
         }
     }

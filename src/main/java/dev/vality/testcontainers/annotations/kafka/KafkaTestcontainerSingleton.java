@@ -1,9 +1,9 @@
 package dev.vality.testcontainers.annotations.kafka;
 
 import dev.vality.testcontainers.annotations.KafkaSpringBootTest;
-import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainerSingleton;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
+import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainerSingleton;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @KafkaTestcontainerSingleton} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.KafkaContainer}, также
+ * {@link org.testcontainers.containers.GenericContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации {@link KafkaTestcontainerSingleton#topicsKeys()}
  * <p>Пример использования {@link KafkaTestcontainerSingleton} с {@link KafkaProducer} — в
@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * <p><h3>Синглтон</h3>
  * <p>Аннотация является {@link KafkaTestcontainer} в режиме
  * <a href="https://ru.wikipedia.org/wiki/Одиночка_(шаблон_проектирования)">синглтона</a> —
- * создаваемый тестконтейнер {@link org.testcontainers.containers.KafkaContainer}
+ * создаваемый тестконтейнер {@link org.testcontainers.containers.GenericContainer}
  * будет создан один раз (в разрезе всего набора тестовых классов в пакете test) и будет переиспользоваться
  * в каждом тестовом классе
  * <p> Аннотация использует {@link AdminClient} для изоляции тестовых данных

@@ -4,11 +4,14 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.UUID;
 
+import static dev.vality.testcontainers.annotations.kafka.KafkaTestcontainerExtension.KAFKA_PORT;
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 /**
@@ -22,16 +25,16 @@ import static dev.vality.testcontainers.annotations.util.SpringApplicationProper
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class KafkaTestcontainerFactory {
 
-    private static final String KAFKA_IMAGE_NAME = "confluentinc/cp-kafka";
+    private static final String KAFKA_IMAGE_NAME = "bitnami/kafka";
     private static final String TAG_PROPERTY = "testcontainers.kafka.tag";
 
-    private KafkaContainer kafkaContainer;
+    private GenericContainer<?> kafkaContainer;
 
-    public static KafkaContainer container() {
+    public static GenericContainer<?> container() {
         return instance().create();
     }
 
-    public static KafkaContainer singletonContainer() {
+    public static GenericContainer<?> singletonContainer() {
         return instance().getOrCreateSingletonContainer();
     }
 
@@ -40,7 +43,7 @@ public class KafkaTestcontainerFactory {
     }
 
     @Synchronized
-    private KafkaContainer getOrCreateSingletonContainer() {
+    private GenericContainer<?> getOrCreateSingletonContainer() {
         if (kafkaContainer != null) {
             return kafkaContainer;
         }
@@ -48,13 +51,20 @@ public class KafkaTestcontainerFactory {
         return kafkaContainer;
     }
 
-    private KafkaContainer create() {
-        try (KafkaContainer container = new KafkaContainer(
-                DockerImageName
-                        .parse(KAFKA_IMAGE_NAME)
-                        .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
+    private GenericContainer<?> create() {
+        try (var container = new GenericContainer<>(DockerImageName
+                .parse(KAFKA_IMAGE_NAME)
+                .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
+                .withExposedPorts(KAFKA_PORT)
+                .withEnv("ALLOW_PLAINTEXT_LISTENER", "yes")
+                .withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://0.0.0.0:" + KAFKA_PORT)
+                .withEnv("KAFKA_CFG_ADVERTISED_LISTENERS", "PLAINTEXT://localhost:" + KAFKA_PORT)
+                .withEnv("KAFKA_CFG_BROKER_ID", "1")
+                .withEnv("KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR", "1")
+                .waitingFor(Wait.forLogMessage(".*started \\(kafka.server.KafkaServer\\).*", 1))
                 .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")) {
-            container.withNetworkAliases("cp-kafka-" + UUID.randomUUID());
+            container.withNetworkAliases("bitnami-kafka-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             return container;
         }
     }

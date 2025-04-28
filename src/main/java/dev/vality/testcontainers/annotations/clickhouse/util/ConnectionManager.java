@@ -15,8 +15,8 @@ import java.util.Properties;
 public class ConnectionManager {
 
     public static Connection getSystemConn(ClickHouseContainer clickHouseContainer) throws SQLException {
-        Properties properties = new Properties();
-        ClickHouseDataSource dataSource = new ClickHouseDataSource(clickHouseContainer.getJdbcUrl(), properties);
+        var properties = new Properties();
+        var dataSource = new ClickHouseDataSource(clickHouseContainer.getJdbcUrl(), properties);
         return dataSource.getConnection();
     }
 }

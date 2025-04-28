@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 
@@ -41,11 +42,12 @@ public class OpensearchTestcontainerFactory {
     }
 
     private GenericContainer<?> create() {
-        try (GenericContainer<?> container = new GenericContainer<>(
+        try (var container = new GenericContainer<>(
                 DockerImageName
                         .parse(OPENSEARCH_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
             container.withNetworkAliases("opensearch-" + UUID.randomUUID());
+            container.withNetwork(Network.SHARED);
             container.withExposedPorts(9200, 9600);
             container.setWaitStrategy((new HttpWaitStrategy())
                     .forPort(9200)

@@ -13,8 +13,8 @@
 
 ```
 postgres
-confluentinc/cp-kafka
-yandex/clickhouse-server
+bitnami/kafka
+clickhouse/clickhouse-server
 ceph/daemon
 minio/minio
 opensearchproject/opensearch
@@ -36,11 +36,11 @@ opensearchproject/opensearch
 ```yml
 testcontainers:
   postgresql:
-    tag: '12'
+    tag: '17'
   kafka:
-    tag: '6.2.0'
+    tag: '3.8'
   clickhouse:
-    tag: 'latest-alpine'
+    tag: '23.10.3'
   ceph:
     tag: 'v3.0.5-stable-3.0-luminous-centos-7'
     accessKey: 'test'

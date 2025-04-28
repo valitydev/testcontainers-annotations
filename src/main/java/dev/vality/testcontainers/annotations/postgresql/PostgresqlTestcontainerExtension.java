@@ -105,16 +105,16 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
             var username = container.getUsername();
             var password = container.getPassword();
             TestPropertyValues.of(
-                    "spring.datasource.url=" + jdbcUrl,
-                    "spring.datasource.username=" + username,
-                    "spring.datasource.password=" + password,
-                    "spring.flyway.url=" + jdbcUrl,
-                    "spring.flyway.user=" + username,
-                    "spring.flyway.password=" + password,
-                    "flyway.url=" + jdbcUrl,
-                    "flyway.user=" + username,
-                    "flyway.password=" + password,
-                    "flyway.postgresql.transactional.lock=false")
+                            "spring.datasource.url=" + jdbcUrl,
+                            "spring.datasource.username=" + username,
+                            "spring.datasource.password=" + password,
+                            "spring.flyway.url=" + jdbcUrl,
+                            "spring.flyway.user=" + username,
+                            "spring.flyway.password=" + password,
+                            "flyway.url=" + jdbcUrl,
+                            "flyway.user=" + username,
+                            "flyway.password=" + password,
+                            "flyway.postgresql.transactional.lock=false")
                     .and(properties)
                     .applyTo(context);
         }

@@ -150,9 +150,9 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
         private void init(ConfigurableApplicationContext context, String[] properties) {
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
-                    "clickhouse.db.url=" + container.getJdbcUrl(),
-                    "clickhouse.db.user=" + container.getUsername(),
-                    "clickhouse.db.password=" + container.getPassword())
+                            "clickhouse.db.url=" + container.getJdbcUrl(),
+                            "clickhouse.db.user=" + container.getUsername(),
+                            "clickhouse.db.password=" + container.getPassword())
                     .and(properties)
                     .applyTo(context);
         }

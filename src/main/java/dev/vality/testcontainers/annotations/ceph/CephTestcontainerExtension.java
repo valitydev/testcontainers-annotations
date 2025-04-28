@@ -117,31 +117,31 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
                 String[] properties) {
             var container = THREAD_CONTAINER.get();
             TestPropertyValues.of(
-                    // deprecated
+                            // deprecated
                             "storage.endpoint=" + container.getHost() + ":" +
-                            container.getMappedPort(8080),
+                                    container.getMappedPort(8080),
 //                    "storage.signingRegion=" + signingRegion,
-                    "storage.accessKey=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
-                    "storage.secretKey=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY),
+                            "storage.accessKey=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
+                            "storage.secretKey=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY),
 //                    "storage.clientProtocol=" + clientProtocol,
 //                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
-                    "storage.bucketName=" + bucketName,
-                    // --
+                            "storage.bucketName=" + bucketName,
+                            // --
                             "s3.endpoint=" + container.getHost() + ":" + container.getMappedPort(8080),
-                    "s3.bucket-name=" + bucketName,
+                            "s3.bucket-name=" + bucketName,
 //                    "s3.signing-region=" + signingRegion,
 //                    "s3.client-protocol=" + clientProtocol,
 //                    "s3.client-max-error-retry=" + clientMaxErrorRetry,
 //                    "s3.signer-override=" + signerOverride,
-                    "s3.access-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
-                    "s3.secret-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY),
-                    "s3-sdk-v2.enabled=false",
-                    "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
-                            container.getMappedPort(8080)),
-                    "s3-sdk-v2.bucket-name=" + bucketName,
+                            "s3.access-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
+                            "s3.secret-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY),
+                            "s3-sdk-v2.enabled=false",
+                            "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
+                                    container.getMappedPort(8080)),
+                            "s3-sdk-v2.bucket-name=" + bucketName,
 //                    "s3-sdk-v2.region=" + signingRegion,
-                    "s3-sdk-v2.access-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
-                    "s3-sdk-v2.secret-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY))
+                            "s3-sdk-v2.access-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(ACCESS_KEY),
+                            "s3-sdk-v2.secret-key=" + SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY))
                     .and(properties)
                     .applyTo(context);
         }

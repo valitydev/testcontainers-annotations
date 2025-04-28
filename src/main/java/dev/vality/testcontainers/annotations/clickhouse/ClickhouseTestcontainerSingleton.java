@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @ClickhouseTestcontainerSingleton} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.ClickHouseContainer}, также
+ * {@link org.testcontainers.clickhouse.ClickHouseContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации
  * {@link ClickhouseTestcontainerSingleton#migrations()}} и {@link ClickhouseTestcontainerSingleton#dbNameShouldBeDropped()}
@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  * <p><h3>Синглтон</h3>
  * <p>Аннотация является {@link ClickhouseTestcontainer} в режиме
  * <a href="https://ru.wikipedia.org/wiki/Одиночка_(шаблон_проектирования)">синглтона</a> —
- * создаваемый тестконтейнер {@link org.testcontainers.containers.ClickHouseContainer}
+ * создаваемый тестконтейнер {@link org.testcontainers.clickhouse.ClickHouseContainer}
  * будет создан один раз (в разрезе всего набора тестовых классов в пакете test) и будет переиспользоваться
  * в каждом тестовом классе
  * <p> Аннотация использует {@link ClickhouseTestcontainerSingleton#dbNameShouldBeDropped()} для изоляции тестовых данных
@@ -71,7 +71,7 @@ import java.lang.annotation.Target;
  *
  * @see ClickhouseTestcontainer @ClickhouseTestcontainer
  * @see ExtendWith @ExtendWith
- * @see org.testcontainers.containers.ClickHouseContainer ClickHouseContainer
+ * @see org.testcontainers.clickhouse.ClickHouseContainer ClickHouseContainer
  * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})

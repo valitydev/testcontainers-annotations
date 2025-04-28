@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 public class FileUtil {
 
     public static String getFile(String fileName) {
-        ClassLoader classLoader = FileUtil.class.getClassLoader();
+        var classLoader = FileUtil.class.getClassLoader();
         try {
             return IOUtils.toString(classLoader.getResourceAsStream(fileName), StandardCharsets.UTF_8);
         } catch (IOException e) {
