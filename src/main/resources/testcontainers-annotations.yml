@@ -2,7 +2,8 @@ testcontainers:
   postgresql:
     tag: '17'
   kafka:
-    tag: '3.8'
+    bitnami:
+      tag: '3.8'
   clickhouse:
     tag: '23.10.3'
   ceph:

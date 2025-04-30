@@ -111,7 +111,7 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     private void appliedMigrations(ClickHouseContainer container, String[] migrations) {
         try {
             ChInitializer.initAllScripts(container, Arrays.asList(migrations));
-            log.info("Successfully applied " + migrations.length + " migrations");
+            log.info("Successfully applied {} migrations", migrations.length);
         } catch (SQLException ex) {
             throw new ClickhouseStartingException(
                     "Error then applied " + migrations.length + " migrations, ",
@@ -124,7 +124,7 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
             try (Statement statement = connection.createStatement()) {
                 statement.execute(String.format("DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
             }
-            log.info(String.format("Successfully DROP DATABASE IF EXISTS %s", annotation.dbNameShouldBeDropped()));
+            log.info("Successfully DROP DATABASE IF EXISTS {}", annotation.dbNameShouldBeDropped());
         } catch (SQLException ex) {
             throw new ClickhouseStartingException(
                     "Error then drop database dbName=" + annotation.dbNameShouldBeDropped() + ", ",
