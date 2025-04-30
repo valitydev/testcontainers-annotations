@@ -14,6 +14,7 @@
 ```
 postgres
 bitnami/kafka
+apache/kafka
 clickhouse/clickhouse-server
 ceph/daemon
 minio/minio
@@ -40,6 +41,8 @@ testcontainers:
   kafka:
     bitnami:
       tag: '3.8'
+    apache:
+      tag: '3.8.0'
   clickhouse:
     tag: '23.10.3'
   ceph:
