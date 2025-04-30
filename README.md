@@ -43,6 +43,8 @@ testcontainers:
       tag: '3.8'
     apache:
       tag: '3.8.0'
+    confluentinc:
+      tag: '7.8.0'
   clickhouse:
     tag: '23.10.3'
   ceph:
