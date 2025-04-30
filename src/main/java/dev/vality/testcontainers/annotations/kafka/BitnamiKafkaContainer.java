@@ -26,7 +26,7 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
     private static final String TAG_PROPERTY = "testcontainers.kafka." + BITNAMI + ".tag";
     private static final int KAFKA_PORT = 9092;
     private static final int CONTROLLER_PORT = 9093;
-    public static final int INTERNAL = 29092;
+    private static final int INTERNAL_PORT = 29092;
 
     public BitnamiKafkaContainer() {
         super(DockerImageName
@@ -42,7 +42,7 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
         withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER");
         withEnv("KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP", "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT");
         withEnv("KAFKA_CFG_ADVERTISED_LISTENERS", "PLAINTEXT://localhost:" + KAFKA_PORT);
-        withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:" + KAFKA_PORT + ",CONTROLLER://:" + CONTROLLER_PORT + ",INTERNAL://:" + INTERNAL);
+        withEnv("KAFKA_CFG_LISTENERS", "PLAINTEXT://:" + KAFKA_PORT + ",CONTROLLER://:" + CONTROLLER_PORT + ",INTERNAL://:" + INTERNAL_PORT);
         withEnv("KAFKA_CFG_BROKER_ID", "1");
         withEnv("KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR", "1");
         withEnv("KAFKA_CFG_NUM_PARTITIONS", "1");
@@ -61,15 +61,14 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
     @Override
     @SneakyThrows
     protected void containerIsStarting(InspectContainerResponse containerInfo) {
-        super.containerIsStarting(containerInfo);
         var advertisedListeners = String.join(",",
-                "PLAINTEXT://" + getHost() + ":" + getMappedPort(KAFKA_PORT),
-                "INTERNAL://localhost:" + INTERNAL);
+                "PLAINTEXT://" + getBootstrapServers(),
+                "INTERNAL://localhost:" + INTERNAL_PORT);
         var script = String.join("\n",
                 "#!/bin/bash",
                 "export KAFKA_CFG_ADVERTISED_LISTENERS=" + advertisedListeners,
                 "/opt/bitnami/scripts/kafka/entrypoint.sh /opt/bitnami/scripts/kafka/run.sh > /tmp/kafka.log 2>&1");
-        copyFileToContainer(Transferable.of(script.getBytes(), 0777), "/start-kafka.sh");
+        copyFileToContainer(Transferable.of(script.getBytes(), 511), "/start-kafka.sh");
         execInContainer("sh", "-c", "nohup /start-kafka.sh &");
         execInContainer("sh", "-c", "tail -n+1 -f /tmp/kafka.log > /proc/1/fd/1 &");
         WaitingConsumer logConsumer = new WaitingConsumer();
@@ -86,7 +85,7 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
 
     @Override
     public String execInContainerKafkaTopicsListCommand() {
-        var kafkaTopicsListCommand = "/opt/" + BITNAMI + "/kafka/bin/kafka-topics.sh --bootstrap-server INTERNAL://localhost:" + INTERNAL + " --list";
+        var kafkaTopicsListCommand = "/opt/" + BITNAMI + "/kafka/bin/kafka-topics.sh --bootstrap-server INTERNAL://localhost:" + INTERNAL_PORT + " --list";
         try {
             var stdout = execInContainer("/bin/bash", "-c", kafkaTopicsListCommand)
                     .getStdout();
