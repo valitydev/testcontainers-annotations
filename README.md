@@ -15,6 +15,7 @@
 postgres
 bitnami/kafka
 apache/kafka
+confluentinc/kafka
 clickhouse/clickhouse-server
 ceph/daemon
 minio/minio
@@ -43,7 +44,7 @@ testcontainers:
       tag: '3.8'
     apache:
       tag: '3.8.0'
-    confluentinc:
+    confluent:
       tag: '7.8.0'
   clickhouse:
     tag: '23.10.3'

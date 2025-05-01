@@ -3,6 +3,7 @@ package dev.vality.testcontainers.annotations.kafka;
 import dev.vality.testcontainers.annotations.KafkaSpringBootTest;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
+import dev.vality.testcontainers.annotations.kafka.constants.Provider;
 import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainerSingleton;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -125,5 +126,7 @@ public @interface KafkaTestcontainerSingleton {
      * пример — topicsKeys = {"kafka.topics.invoicing.id",...}
      */
     String[] topicsKeys();
+
+    Provider provider() default Provider.BITNAMI;
 
 }

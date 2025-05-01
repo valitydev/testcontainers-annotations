@@ -92,9 +92,9 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findPrototypeAnnotation(testClass).get().properties()); 
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findSingletonAnnotation(testClass).get().properties()); 
                 }
             };
         }
