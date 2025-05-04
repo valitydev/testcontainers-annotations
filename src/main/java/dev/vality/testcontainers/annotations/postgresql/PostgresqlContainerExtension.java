@@ -8,9 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
@@ -19,11 +17,13 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
 
     private static final String POSTGRESQL_IMAGE_NAME = "postgres";
     private static final String TAG_PROPERTY = "testcontainers.postgresql.tag";
-
-    private static final String CURRENT_SCHEMA_QUERY = "SELECT current_schema()";
+    private static final String CURRENT_SCHEMA_QUERY = "SELECT schema_name FROM information_schema.schemata";
     private static final String TABLES_QUERY = "SELECT tablename FROM pg_tables " +
             "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'";
     private static final String TRUNCATE_TABLE_TEMPLATE = "TRUNCATE TABLE %s.%s CASCADE";
+    private static final Set<String> SYSTEM_SCHEMAS = Set.of("information_schema", "public");
+    public static final String PG_ = "pg_";
+    public static final String SQL_ = "sql_";
 
     public PostgresqlContainerExtension() {
         super(DockerImageName
@@ -36,22 +36,28 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     @SneakyThrows
     public void cleanupDatabaseTables() {
         try (var connection = DriverManager.getConnection(getJdbcUrl(), getUsername(), getPassword())) {
-            var currentSchema = getCurrentSchema(connection);
-            var tables = getUserTables(connection, currentSchema);
-            if (!tables.isEmpty()) {
-                truncateTables(connection, currentSchema, tables);
+            for (var schema : getSchemas(connection)) {
+                var tables = getUserTables(connection, schema);
+                if (!tables.isEmpty()) {
+                    truncateTables(connection, schema, tables);
+                }
             }
         }
     }
 
     @SneakyThrows
-    private String getCurrentSchema(Connection connection) {
+    private Set<String> getSchemas(Connection connection) {
+        var schemas = new HashSet<String>();
         try (var statement = connection.createStatement(); var resultSet = statement.executeQuery(CURRENT_SCHEMA_QUERY)) {
-            if (resultSet.next()) {
-                return resultSet.getString(1);
+            while (resultSet.next()) {
+                var schema = resultSet.getString("schema_name");
+                if (!SYSTEM_SCHEMAS.contains(schema)
+                        && !schema.startsWith(PG_) && !schema.startsWith(SQL_)) {
+                    schemas.add(schema);
+                }
             }
-            return "public";
         }
+        return schemas;
     }
 
     @SneakyThrows
@@ -62,7 +68,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
             try (var resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     var tableName = resultSet.getString("tablename");
-                    if (!tableName.startsWith("pg_") && !tableName.startsWith("sql_")) {
+                    if (!tableName.startsWith(PG_) && !tableName.startsWith(SQL_)) {
                         tables.add(tableName);
                     }
                 }
