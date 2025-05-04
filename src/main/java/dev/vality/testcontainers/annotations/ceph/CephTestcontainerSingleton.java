@@ -1,6 +1,5 @@
 package dev.vality.testcontainers.annotations.ceph;
 
-import dev.vality.testcontainers.annotations.DefaultSpringBootTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -32,25 +31,10 @@ import java.lang.annotation.Target;
  * @SpringBootTest
  * public class FileStorageTest {
  * }}</pre>
- * <p>В примере ниже {@link CephTestcontainerSingleton} подключается к
- * {@link DefaultSpringBootTest},
- * таким образом создается удобная обертка, которую можно использовать для набора тестов
- * <pre> {@code
- * @Target({ElementType.TYPE})
- * @Retention(RetentionPolicy.RUNTIME)
- * @CephTestcontainerSingleton
- * @DefaultSpringBootTest
- * public @interface CephSpringBootITest {
- * }}</pre>
- * <pre> {@code
- * @CephSpringBootITest
- * public class FileStorageTest {
- * }}</pre>
  *
  * @see CephTestcontainer @CephTestcontainer
  * @see ExtendWith @ExtendWith
  * @see org.testcontainers.containers.GenericContainer PostgreSQLContainer
- * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,5 @@
 package dev.vality.testcontainers.annotations.minio;
 
-import dev.vality.testcontainers.annotations.DefaultSpringBootTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -24,26 +23,11 @@ import java.lang.annotation.Target;
  * @SpringBootTest
  * public class FileStorageTest {
  * }}</pre>
- * <p>В примере ниже {@link MinioTestcontainer} подключается к
- * {@link DefaultSpringBootTest},
- * таким образом создается удобная обертка, которую можно использовать для набора тестов
- * <pre> {@code
- * @Target({ElementType.TYPE})
- * @Retention(RetentionPolicy.RUNTIME)
- * @MinioTestcontainer
- * @DefaultSpringBootTest
- * public @interface MinioSpringBootITest {
- * }}</pre>
- * <pre> {@code
- * @MinioSpringBootITest
- * public class FileStorageTest {
- * }}</pre>
  *
  * @see MinioTestcontainerSingleton @MinioTestcontainerSingleton
  * @see ExtendWith @ExtendWith
  * @see MinioTestcontainerExtension MinioTestcontainerExtension
  * @see org.testcontainers.containers.GenericContainer GenericContainer
- * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,5 @@
 package dev.vality.testcontainers.annotations.clickhouse;
 
-import dev.vality.testcontainers.annotations.DefaultSpringBootTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -32,34 +31,11 @@ import java.lang.annotation.Target;
  *
  *   ...
  * }}</pre>
- * <p>В примере ниже {@link ClickhouseTestcontainer} подключается к
- * {@link DefaultSpringBootTest},
- * таким образом создается удобная обертка, которую можно использовать для набора тестов
- * <pre> {@code
- * @Target({ElementType.TYPE})
- * @Retention(RetentionPolicy.RUNTIME)
- * @ClickhouseTestcontainer(
- *         migrations = {
- *                 "sql/db_init.sql",
- *                 "sql/V4__create_payment.sql"})
- * @DefaultSpringBootTest
- * public @interface ClickhouseSpringBootITest {
- *
- * }}</pre>
- * <pre> {@code
- * @ClickhouseSpringBootITest
- * public class AdjustmentDaoTest {
- *
- *     @Autowired
- *     private AdjustmentDao adjustmentDao;
- *     ...
- * }}</pre>
  *
  * @see ClickhouseTestcontainerSingleton @ClickhouseTestcontainerSingleton
  * @see ExtendWith @ExtendWith
  * @see ClickhouseTestcontainerExtension ClickhouseTestcontainerExtension
  * @see org.testcontainers.clickhouse.ClickHouseContainer ClickHouseContainer
- * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,5 @@
 package dev.vality.testcontainers.annotations.postgresql;
 
-import dev.vality.testcontainers.annotations.DefaultSpringBootTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,31 +38,11 @@ import java.lang.annotation.Target;
  *
  *   ...
  * }}</pre>
- * <p>В примере ниже {@link PostgresqlTestcontainerSingleton} подключается к
- * {@link DefaultSpringBootTest},
- * таким образом создается удобная обертка, которую можно использовать для набора тестов
- * <pre> {@code
- * @Target({ElementType.TYPE})
- * @Retention(RetentionPolicy.RUNTIME)
- * @PostgresqlTestcontainerSingleton
- * @DefaultSpringBootTest
- * public @interface PostgresqlSpringBootITest {
- *
- * }}</pre>
- * <pre> {@code
- * @PostgresqlSpringBootITest
- * public class AdjustmentDaoTest {
- *
- *     @Autowired
- *     private AdjustmentDao adjustmentDao;
- *     ...
- * }}</pre>
  *
  * @see PostgresqlTestcontainer @PostgresqlTestcontainer
  * @see ExtendWith @ExtendWith
  * @see Transactional @Transactional
  * @see org.testcontainers.containers.PostgreSQLContainer PostgreSQLContainer
- * @see DefaultSpringBootTest @DefaultSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
