@@ -81,7 +81,7 @@ public class ClickhouseContainerExtension extends ClickHouseContainer {
             }
         } catch (SQLException e) {
             log.error("Error when execAllInFile path: {}", path);
-            throw new RuntimeException(String.format("Error when execAllInFile path: %s", path), e);
+            throw new ClickhouseStartingException(String.format("Error when execAllInFile path: %s", path), e);
         }
     }
 
