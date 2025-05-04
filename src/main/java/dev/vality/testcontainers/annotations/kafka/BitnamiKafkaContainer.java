@@ -16,7 +16,7 @@ public class BitnamiKafkaContainer extends org.testcontainers.kafka.BitnamiKafka
 
     public BitnamiKafkaContainer(List<String> topics) {
         super(DockerImageName
-                .parse(KAFKA_IMAGE_NAME)
+                        .parse(KAFKA_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)),
                 topics);
     }

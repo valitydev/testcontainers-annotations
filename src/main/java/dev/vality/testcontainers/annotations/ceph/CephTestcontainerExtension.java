@@ -96,7 +96,7 @@ public class CephTestcontainerExtension implements BeforeAllCallback, AfterAllCa
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    var annotation = findPrototypeAnnotation(testClass).get(); 
+                    var annotation = findPrototypeAnnotation(testClass).get();
                     init(
                             context,
                             annotation.bucketName(),

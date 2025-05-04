@@ -91,9 +91,9 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); 
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); 
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }
