@@ -14,6 +14,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +24,12 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
 
     private static final int KAFKA_PORT = 9092;
     private static final int BROKER_PORT = 9093;
-    public static final int LIMIT = 60;
+    private static final int LIMIT = 60;
+    private final List<String> topics;
 
-    public BitnamiKafkaContainer(DockerImageName dockerImageName) {
+    public BitnamiKafkaContainer(DockerImageName dockerImageName, List<String> topics) {
         super(dockerImageName);
+        this.topics = topics;
         dockerImageName.assertCompatibleWith(DockerImageName.parse("bitnami/kafka"));
         withExposedPorts(KafkaHelper.KAFKA_PORT);
         withEnv(KafkaHelper.envVars());
@@ -70,6 +73,11 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
     }
 
     @Override
+    public List<String> topics() {
+        return topics;
+    }
+
+    @Override
     public String getBootstrapServers() {
         return getHost() + ":" + getMappedPort(KAFKA_PORT);
     }
@@ -77,6 +85,6 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
     @Override
     public String execInContainerKafkaTopicsListCommand() {
         var kafkaTopicsPath = "/opt/bitnami/kafka/bin/kafka-topics.sh";
-        return execInContainerKafkaTopicsListCommand(kafkaTopicsPath);
+        return execInContainerKafkaTopicsListCommandWithPath(kafkaTopicsPath);
     }
 }

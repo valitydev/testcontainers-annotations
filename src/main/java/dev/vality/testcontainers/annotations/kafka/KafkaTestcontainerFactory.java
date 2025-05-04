@@ -6,10 +6,12 @@ import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 /**
  * Фабрика по созданию контейнеров
- * <p>{@link #create(Provider)} создает экземпляр тестконтейнера
- * <p>{@link #getOrCreateSingletonContainer(Provider)} создает синглтон тестконтейнера
+ * <p>{@link #create(Provider, List)} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer(Provider, List)} создает синглтон тестконтейнера
  *
  * @see KafkaTestcontainerExtension KafkaTestcontainerExtension
  */
@@ -19,12 +21,12 @@ public class KafkaTestcontainerFactory {
 
     private KafkaContainerExtension kafkaContainer;
 
-    public static KafkaContainerExtension container(Provider provider) {
-        return instance().create(provider);
+    public static KafkaContainerExtension container(Provider provider, List<String> topics) {
+        return instance().create(provider, topics);
     }
 
-    public static KafkaContainerExtension singletonContainer(Provider provider) {
-        return instance().getOrCreateSingletonContainer(provider);
+    public static KafkaContainerExtension singletonContainer(Provider provider, List<String> topics) {
+        return instance().getOrCreateSingletonContainer(provider, topics);
     }
 
     private static KafkaTestcontainerFactory instance() {
@@ -32,28 +34,28 @@ public class KafkaTestcontainerFactory {
     }
 
     @Synchronized
-    private KafkaContainerExtension getOrCreateSingletonContainer(Provider provider) {
+    private KafkaContainerExtension getOrCreateSingletonContainer(Provider provider, List<String> topics) {
         if (kafkaContainer != null) {
             return kafkaContainer;
         }
-        kafkaContainer = create(provider);
+        kafkaContainer = create(provider, topics);
         return kafkaContainer;
     }
 
-    private KafkaContainerExtension create(Provider provider) {
+    private KafkaContainerExtension create(Provider provider, List<String> topics) {
         return switch (provider) {
             case BITNAMI -> {
-                try (var container = new BitnamiKafkaContainer()) {
+                try (var container = new BitnamiKafkaContainer(topics)) {
                     yield container;
                 }
             }
             case APACHE -> {
-                try (var container = new ApacheKafkaContainer()) {
+                try (var container = new ApacheKafkaContainer(topics)) {
                     yield container;
                 }
             }
             case CONFLUENT -> {
-                try (var container = new ConfluentKafkaContainer()) {
+                try (var container = new ConfluentKafkaContainer(topics)) {
                     yield container;
                 }
             }

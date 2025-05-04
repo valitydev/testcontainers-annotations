@@ -27,11 +27,15 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
 
     Logger log = LoggerFactory.getLogger(KafkaContainerExtension.class);
 
+    List<String> topics();
+
     String getBootstrapServers();
 
-    default void createTopics(List<String> topics) {
+    String execInContainerKafkaTopicsListCommand();
+
+    default void createTopics() {
         try (var admin = createAdminClient()) {
-            var newTopics = topics.stream()
+            var newTopics = topics().stream()
                     .map(topic -> new NewTopic(topic, 1, (short) 1))
                     .peek(newTopic -> log.info(newTopic.toString()))
                     .collect(Collectors.toList());
@@ -43,9 +47,10 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
             var adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
             log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: {}", adminClientTopics);
             assertThat(adminClientTopics.size())
-                    .isEqualTo(topics.size());
-            assertThat(execInContainerKafkaTopicsListCommand())
-                    .contains(topics);
+                    .isEqualTo(topics().size());
+            var actual = execInContainerKafkaTopicsListCommand();
+            assertThat(topics().stream().allMatch(actual::contains))
+                    .isTrue();
         } catch (ExecutionException | TimeoutException ex) {
             throw new KafkaStartingException("Error when topic creating, ", ex);
         } catch (InterruptedException ex) {
@@ -54,18 +59,24 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
         }
     }
 
-    default void deleteTopics(List<String> topics) {
+    default void deleteTopics() {
         try (var admin = createAdminClient()) {
-            var topicsResult = admin.deleteTopics(topics);
+            var adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            if (adminClientTopics.isEmpty()) {
+                return;
+            }
+            var topicsResult = admin.deleteTopics(topics());
             Awaitility.await()
                     .atMost(Duration.ofSeconds(WAIT_TIMEOUT))
                     .pollInterval(Duration.ofSeconds(2))
                     .untilAsserted(() -> topicsResult.all().get(1, TimeUnit.SECONDS));
-            var adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
             log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: {} (should be empty)", adminClientTopics);
             assertThat(adminClientTopics)
                     .isEmpty();
-            execInContainerKafkaTopicsListCommand();
+            var actual = execInContainerKafkaTopicsListCommand();
+            assertThat(topics().stream().noneMatch(actual::contains))
+                    .isTrue();
         } catch (ExecutionException | TimeoutException ex) {
             throw new KafkaStartingException("Error when topic deleting, ", ex);
         } catch (InterruptedException ex) {
@@ -80,9 +91,7 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
         return AdminClient.create(properties);
     }
 
-    String execInContainerKafkaTopicsListCommand();
-
-    default String execInContainerKafkaTopicsListCommand(String kafkaTopicsPath) {
+    default String execInContainerKafkaTopicsListCommandWithPath(String kafkaTopicsPath) {
         var kafkaTopicsListCommand = kafkaTopicsPath + " --bootstrap-server localhost:9093 --list";
         try {
             var stdout = execInContainer("/bin/bash", "-c", kafkaTopicsListCommand).getStdout();

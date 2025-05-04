@@ -22,8 +22,8 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
             "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'";
     private static final String TRUNCATE_TABLE_TEMPLATE = "TRUNCATE TABLE %s.%s CASCADE";
     private static final Set<String> SYSTEM_SCHEMAS = Set.of("information_schema", "public");
-    public static final String PG_ = "pg_";
-    public static final String SQL_ = "sql_";
+    private static final String PG_ = "pg_";
+    private static final String SQL_ = "sql_";
 
     public PostgresqlContainerExtension() {
         super(DockerImageName

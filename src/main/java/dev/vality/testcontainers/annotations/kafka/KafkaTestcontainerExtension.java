@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
  * @see AfterAllCallback AfterAllCallback
  */
 @Slf4j
-public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
+public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
     private static final ThreadLocal<KafkaContainerExtension> THREAD_CONTAINER = new ThreadLocal<>();
 
@@ -57,22 +58,28 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
             var annotation = findPrototypeAnnotation(context).get();
-            var container = KafkaTestcontainerFactory.container(annotation.provider());
-            GenericContainerUtil.startContainer(container);
             var topics = loadTopics(annotation.topicsKeys());
-            container.createTopics(topics);
+            var container = KafkaTestcontainerFactory.container(annotation.provider(), topics);
+            GenericContainerUtil.startContainer(container);
+            container.createTopics();
             THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
             var annotation = findSingletonAnnotation(context).get();
-            var container = KafkaTestcontainerFactory.singletonContainer(annotation.provider());
             var topics = loadTopics(annotation.topicsKeys());
+            var container = KafkaTestcontainerFactory.singletonContainer(annotation.provider(), topics);
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
-            } else {
-                container.deleteTopics(topics);
             }
-            container.createTopics(topics);
             THREAD_CONTAINER.set(container);
+        }
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        var container = THREAD_CONTAINER.get();
+        if (container != null && container.isRunning()) {
+            container.deleteTopics();
+            container.createTopics();
         }
     }
 
@@ -120,9 +127,9 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); 
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); 
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }
