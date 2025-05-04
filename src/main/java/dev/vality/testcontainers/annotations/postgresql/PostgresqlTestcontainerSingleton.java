@@ -41,13 +41,11 @@ import java.lang.annotation.Target;
  *
  * @see PostgresqlTestcontainer @PostgresqlTestcontainer
  * @see ExtendWith @ExtendWith
- * @see Transactional @Transactional
  * @see org.testcontainers.containers.PostgreSQLContainer PostgreSQLContainer
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(PostgresqlTestcontainerExtension.class)
-@Transactional
 public @interface PostgresqlTestcontainerSingleton {
 
     /**

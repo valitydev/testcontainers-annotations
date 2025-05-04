@@ -4,6 +4,7 @@ import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -11,7 +12,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,9 +36,9 @@ import java.util.Optional;
  * @see AfterAllCallback AfterAllCallback
  */
 @Slf4j
-public class PostgresqlTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
+public class PostgresqlTestcontainerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
-    private static final ThreadLocal<PostgreSQLContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
+    private static final ThreadLocal<PostgresqlContainerExtension> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
     public void beforeAll(ExtensionContext context) {
@@ -52,6 +52,14 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
                 GenericContainerUtil.startContainer(container);
             }
             THREAD_CONTAINER.set(container);
+        }
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        var container = THREAD_CONTAINER.get();
+        if (container != null && container.isRunning()) {
+            container.cleanupDatabaseTables();
         }
     }
 
@@ -92,9 +100,9 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); 
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); 
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }
