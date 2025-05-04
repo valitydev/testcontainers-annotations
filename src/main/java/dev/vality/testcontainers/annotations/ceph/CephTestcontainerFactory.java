@@ -66,7 +66,7 @@ public class CephTestcontainerFactory {
                 .withEnv("CEPH_DEMO_SECRET_KEY", SpringApplicationPropertiesLoader.loadDefaultLibraryProperty(SECRET_KEY))
                 .withEnv("CEPH_DEMO_BUCKET", "TEST")
                 .waitingFor(GenericContainerUtil.getWaitStrategy("/api/v0.1/health", 200, 5000, Duration.ofMinutes(1)))) {
-            container.withNetworkAliases("ceph-daemon-" + UUID.randomUUID());
+            container.withNetworkAliases("ceph-" + UUID.randomUUID());
             container.withNetwork(Network.SHARED);
             return container;
         }

@@ -4,18 +4,11 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.clickhouse.ClickHouseContainer;
-import org.testcontainers.containers.Network;
-import org.testcontainers.utility.DockerImageName;
-
-import java.util.UUID;
-
-import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 /**
  * Фабрика по созданию контейнеров
- * <p>{@link #create()} создает экземпляр тестконтейнера
- * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ * <p>{@link #create(String, String[])} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer(String, String[])} создает синглтон тестконтейнера
  *
  * @see ClickhouseTestcontainerExtension ClickhouseTestcontainerExtension
  */
@@ -23,17 +16,14 @@ import static dev.vality.testcontainers.annotations.util.SpringApplicationProper
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ClickhouseTestcontainerFactory {
 
-    private static final String CLICKHOUSE_IMAGE_NAME = "clickhouse/clickhouse-server";
-    private static final String TAG_PROPERTY = "testcontainers.clickhouse.tag";
+    private ClickhouseContainerExtension clickHouseContainer;
 
-    private ClickHouseContainer clickHouseContainer;
-
-    public static ClickHouseContainer container() {
-        return instance().create();
+    public static ClickhouseContainerExtension container(String databaseName, String[] migrations) {
+        return instance().create(databaseName, migrations);
     }
 
-    public static ClickHouseContainer singletonContainer() {
-        return instance().getOrCreateSingletonContainer();
+    public static ClickhouseContainerExtension singletonContainer(String databaseName, String[] migrations) {
+        return instance().getOrCreateSingletonContainer(databaseName, migrations);
     }
 
     private static ClickhouseTestcontainerFactory instance() {
@@ -41,21 +31,16 @@ public class ClickhouseTestcontainerFactory {
     }
 
     @Synchronized
-    private ClickHouseContainer getOrCreateSingletonContainer() {
+    private ClickhouseContainerExtension getOrCreateSingletonContainer(String databaseName, String[] migrations) {
         if (clickHouseContainer != null) {
             return clickHouseContainer;
         }
-        clickHouseContainer = create();
+        clickHouseContainer = create(databaseName, migrations);
         return clickHouseContainer;
     }
 
-    private ClickHouseContainer create() {
-        try (var container = new ClickHouseContainer(
-                DockerImageName
-                        .parse(CLICKHOUSE_IMAGE_NAME)
-                        .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))) {
-            container.withNetworkAliases("clickhouse-server-" + UUID.randomUUID());
-            container.withNetwork(Network.SHARED);
+    private ClickhouseContainerExtension create(String databaseName, String[] migrations) {
+        try (var container = new ClickhouseContainerExtension(databaseName, migrations)) {
             return container;
         }
     }

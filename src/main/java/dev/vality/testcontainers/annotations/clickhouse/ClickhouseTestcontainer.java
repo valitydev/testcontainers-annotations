@@ -56,4 +56,6 @@ public @interface ClickhouseTestcontainer {
      */
     String[] migrations();
 
+    String dbNameShouldBeDropped();
+
 }

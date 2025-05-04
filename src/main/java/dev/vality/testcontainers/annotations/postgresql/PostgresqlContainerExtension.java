@@ -29,7 +29,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
         super(DockerImageName
                 .parse(POSTGRESQL_IMAGE_NAME)
                 .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)));
-        withNetworkAliases("postgres-" + UUID.randomUUID());
+        withNetworkAliases("postgresql-" + UUID.randomUUID());
         withNetwork(Network.SHARED);
     }
 
