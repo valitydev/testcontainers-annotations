@@ -8,7 +8,8 @@ import java.util.List;
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
-public class BitnamiKafkaContainer extends org.testcontainers.kafka.BitnamiKafkaContainer implements KafkaContainerExtension {
+public class BitnamiKafkaContainer extends org.testcontainers.kafka.BitnamiKafkaContainer
+        implements KafkaContainerExtension {
 
     private static final String BITNAMI = "bitnami";
     private static final String KAFKA_IMAGE_NAME = BITNAMI + "/kafka";
