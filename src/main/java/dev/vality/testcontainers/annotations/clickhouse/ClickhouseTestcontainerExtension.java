@@ -44,14 +44,12 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
             var annotation = findPrototypeAnnotation(context).get();
-            var container = ClickhouseTestcontainerFactory.container(annotation.dbNameShouldBeDropped(),
-                    annotation.migrations());
+            var container = ClickhouseTestcontainerFactory.container(annotation.dbNameShouldBeDropped(), annotation.migrations());
             GenericContainerUtil.startContainer(container);
             THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
             var annotation = findSingletonAnnotation(context).get();
-            var container = ClickhouseTestcontainerFactory.singletonContainer(annotation.dbNameShouldBeDropped(),
-                    annotation.migrations());
+            var container = ClickhouseTestcontainerFactory.singletonContainer(annotation.dbNameShouldBeDropped(), annotation.migrations());
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
             }

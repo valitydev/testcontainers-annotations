@@ -10,8 +10,7 @@ import java.util.UUID;
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
-public class ConfluentKafkaContainer extends org.testcontainers.kafka.ConfluentKafkaContainer
-        implements KafkaContainerExtension {
+public class ConfluentKafkaContainer extends org.testcontainers.kafka.ConfluentKafkaContainer implements KafkaContainerExtension {
 
     private static final String CONFLUENT = "confluent";
     private static final String KAFKA_IMAGE_NAME = CONFLUENT + "inc/cp-kafka";

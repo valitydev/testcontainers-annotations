@@ -48,8 +48,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     @SneakyThrows
     private Set<String> getSchemas(Connection connection) {
         var schemas = new HashSet<String>();
-        try (var statement = connection.createStatement();
-             var resultSet = statement.executeQuery(CURRENT_SCHEMA_QUERY)) {
+        try (var statement = connection.createStatement(); var resultSet = statement.executeQuery(CURRENT_SCHEMA_QUERY)) {
             while (resultSet.next()) {
                 var schema = resultSet.getString("schema_name");
                 if (!SYSTEM_SCHEMAS.contains(schema)
