@@ -17,7 +17,6 @@ bitnami/kafka
 apache/kafka
 confluentinc/kafka
 clickhouse/clickhouse-server
-ceph/daemon
 minio/minio
 opensearchproject/opensearch
 ```
@@ -29,7 +28,6 @@ opensearchproject/opensearch
 | @PostgresqlTestcontainer | @PostgresqlTestcontainerSingleton |
 | @KafkaTestcontainer      | @KafkaTestcontainerSingleton      |
 | @ClickhouseTestcontainer | @ClickhouseTestcontainerSingleton |
-| @CephTestcontainer       | @CephTestcontainerSingleton       |
 | @MinioTestcontainer      | @MinioTestcontainerSingleton      |
 | @OpensearchTestcontainer | @OpensearchTestcontainerSingleton |
 
@@ -48,10 +46,6 @@ testcontainers:
       tag: '7.8.0'
   clickhouse:
     tag: '23.10.3'
-  ceph:
-    tag: 'v3.0.5-stable-3.0-luminous-centos-7'
-    accessKey: 'test'
-    secretKey: 'test'
   minio:
     tag: 'RELEASE.2021-10-13T00-23-17Z'
     user: 'minio'

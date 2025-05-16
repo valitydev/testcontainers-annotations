@@ -56,6 +56,13 @@ public @interface ClickhouseTestcontainer {
      */
     String[] migrations();
 
+    /**
+     * Обязательный параметр — здесь указывается имя базы данных, которая будет дропнута
+     * при каждом запуске нового файла с тестами, таким образом обеспечивая изоляцию данных между тестами
+     * и предоставляя каждый раз чистую базу
+     * <p>
+     * пример — dbNameShouldBeDropped = "fraud"
+     */
     String dbNameShouldBeDropped();
 
 }
