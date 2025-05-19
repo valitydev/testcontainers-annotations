@@ -1,6 +1,5 @@
 package dev.vality.testcontainers.annotations.clickhouse;
 
-import dev.vality.testcontainers.annotations.DefaultSpringBootTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -11,7 +10,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @ClickhouseTestcontainer} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.ClickHouseContainer}, также
+ * {@link org.testcontainers.clickhouse.ClickHouseContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации {@link ClickhouseTestcontainer#migrations()}
  * <p>Пример использования в коде — в
@@ -32,34 +31,11 @@ import java.lang.annotation.Target;
  *
  *   ...
  * }}</pre>
- * <p>В примере ниже {@link ClickhouseTestcontainer} подключается к
- * {@link DefaultSpringBootTest},
- * таким образом создается удобная обертка, которую можно использовать для набора тестов
- * <pre> {@code
- * @Target({ElementType.TYPE})
- * @Retention(RetentionPolicy.RUNTIME)
- * @ClickhouseTestcontainer(
- *         migrations = {
- *                 "sql/db_init.sql",
- *                 "sql/V4__create_payment.sql"})
- * @DefaultSpringBootTest
- * public @interface ClickhouseSpringBootITest {
- *
- * }}</pre>
- * <pre> {@code
- * @ClickhouseSpringBootITest
- * public class AdjustmentDaoTest {
- *
- *     @Autowired
- *     private AdjustmentDao adjustmentDao;
- *     ...
- * }}</pre>
  *
  * @see ClickhouseTestcontainerSingleton @ClickhouseTestcontainerSingleton
  * @see ExtendWith @ExtendWith
  * @see ClickhouseTestcontainerExtension ClickhouseTestcontainerExtension
- * @see org.testcontainers.containers.ClickHouseContainer ClickHouseContainer
- * @see DefaultSpringBootTest @DefaultSpringBootTest
+ * @see org.testcontainers.clickhouse.ClickHouseContainer ClickHouseContainer
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -79,5 +55,14 @@ public @interface ClickhouseTestcontainer {
      * пример — migrations = {"sql/db_init.sql","sql/V1__create_payment.sql",...}
      */
     String[] migrations();
+
+    /**
+     * Обязательный параметр — здесь указывается имя базы данных, которая будет дропнута
+     * при каждом запуске нового файла с тестами, таким образом обеспечивая изоляцию данных между тестами
+     * и предоставляя каждый раз чистую базу
+     * <p>
+     * пример — dbNameShouldBeDropped = "fraud"
+     */
+    String dbNameShouldBeDropped();
 
 }

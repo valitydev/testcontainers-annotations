@@ -1,9 +1,10 @@
 package dev.vality.testcontainers.annotations.kafka;
 
-import dev.vality.testcontainers.annotations.KafkaSpringBootTest;
-import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainer;
+import dev.vality.testcontainers.annotations.KafkaConfig;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
+import dev.vality.testcontainers.annotations.kafka.constants.Provider;
+import dev.vality.testcontainers.annotations.postgresql.PostgresqlTestcontainer;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -14,7 +15,7 @@ import java.lang.annotation.Target;
 
 /**
  * Аннотация {@code @KafkaTestcontainer} подключает и запускает тестконтейнер
- * {@link org.testcontainers.containers.KafkaContainer}, также
+ * {@link org.testcontainers.containers.GenericContainer}, также
  * настройки контейнера будут проинициализированы в контекст тестового приложения
  * <p>Аннотация требует дополнительной конфигурации {@link KafkaTestcontainer#topicsKeys()}
  * <p>Пример использования {@link KafkaTestcontainer} с {@link KafkaProducer} — в
@@ -57,7 +58,7 @@ import java.lang.annotation.Target;
  *   ...
  * }}</pre>
  * <p>В примере ниже {@link KafkaTestcontainer} подключается к
- * {@link PostgresqlTestcontainer} и {@link KafkaSpringBootTest},
+ * {@link PostgresqlTestcontainer} и {@link KafkaConfig},
  * таким образом создается удобная обертка, которую можно использовать для набора тестов
  * <pre> {@code
  * @Target({ElementType.TYPE})
@@ -90,7 +91,7 @@ import java.lang.annotation.Target;
  * @see KafkaTestcontainerExtension KafkaTestcontainerExtension
  * @see KafkaProducer KafkaProducer
  * @see KafkaConsumer KafkaConsumer
- * @see KafkaSpringBootTest @KafkaSpringBootTest
+ * @see KafkaConfig @KafkaSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -114,5 +115,7 @@ public @interface KafkaTestcontainer {
      * пример — topicsKeys = {"kafka.topics.invoicing.id",...}
      */
     String[] topicsKeys();
+
+    Provider provider() default Provider.BITNAMI;
 
 }

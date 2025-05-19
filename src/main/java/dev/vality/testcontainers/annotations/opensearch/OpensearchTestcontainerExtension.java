@@ -1,11 +1,16 @@
 package dev.vality.testcontainers.annotations.opensearch;
 
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHost;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
+import org.opensearch.client.Request;
+import org.opensearch.client.RestClient;
 import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
@@ -17,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public class OpensearchTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
+public class OpensearchTestcontainerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
     private static final ThreadLocal<GenericContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
 
@@ -33,6 +38,19 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
                 GenericContainerUtil.startContainer(container);
             }
             THREAD_CONTAINER.set(container);
+        }
+    }
+
+    @Override
+    @SneakyThrows
+    public void beforeEach(ExtensionContext context) {
+        var container = THREAD_CONTAINER.get();
+        if (container != null && container.isRunning()) {
+            var builder = RestClient.builder(new HttpHost(container.getHost(), container.getFirstMappedPort()));
+            var client = builder.build();
+            var deleteRequest = new Request("DELETE", "/*");
+            client.performRequest(deleteRequest);
+            client.close();
         }
     }
 
@@ -73,9 +91,9 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }

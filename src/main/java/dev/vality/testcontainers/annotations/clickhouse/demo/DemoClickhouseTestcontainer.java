@@ -6,6 +6,7 @@ import dev.vality.testcontainers.annotations.clickhouse.ClickhouseTestcontainer;
  * this is a demo example of filling in annotation, do not use
  */
 @ClickhouseTestcontainer(
+        dbNameShouldBeDropped = "databaseName",
         properties = "clickhouse.db.connection.timeout=60000",
         migrations = {
                 "sql/db_init.sql",

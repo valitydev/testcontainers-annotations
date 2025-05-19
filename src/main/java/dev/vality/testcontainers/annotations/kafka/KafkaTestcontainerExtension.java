@@ -1,14 +1,12 @@
 package dev.vality.testcontainers.annotations.kafka;
 
-import dev.vality.testcontainers.annotations.exception.KafkaStartingException;
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
 import dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -16,19 +14,11 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
-import org.testcontainers.containers.KafkaContainer;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * {@code @KafkaTestcontainerExtension} инициализирует тестконтейнер из {@link KafkaTestcontainerFactory},
@@ -44,12 +34,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p><h3>Нюансы</h3>
  * <p>Данное расширение немного сложнее других аналогичных в библиотеке за счет дополнительной работы с топиками
  * <p>Работа заключается в загрузке имен топиков из файла с настройками спринга {@link #loadTopics(String[])},
- * создании топиков через {@link AdminClient} в {@link #createTopics(KafkaContainer, List)},
+ * создании топиков через {@link AdminClient} в {@link KafkaContainerExtension#createTopics(List)},
  * а также валидации результата создания через запрос '/usr/bin/kafka-topics --zookeeper localhost:2181 --list'
- * напрямую в контейнере в {@link #execInContainerKafkaTopicsListCommand(KafkaContainer)}
+ * напрямую в контейнере в {@link KafkaContainerExtension#execInContainerKafkaTopicsListCommand()}
  * <p>Также помимо перечисленного, при работе расширения для создания синглтона перед запуском тестов
- * в каждом файле будет проводится удаление созданных ранее топиков в {@link #deleteTopics(KafkaContainer, List)}
- * и дальнейшее пересоздание топиков в {@link #createTopics(KafkaContainer, List)},
+ * в каждом файле будет проводится удаление созданных ранее топиков в {@link KafkaContainerExtension#deleteTopics(List)}
+ * и дальнейшее пересоздание топиков в {@link KafkaContainerExtension#createTopics(List)},
  * таким образом обеспечивая изоляцию данных между файлами с тестами
  *
  * @see KafkaTestcontainerFactory KafkaTestcontainerFactory
@@ -60,28 +50,36 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @see AfterAllCallback AfterAllCallback
  */
 @Slf4j
-public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
+public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
-    private static final ThreadLocal<KafkaContainer> THREAD_CONTAINER = new ThreadLocal<>();
+    private static final ThreadLocal<KafkaContainerExtension> THREAD_CONTAINER = new ThreadLocal<>();
 
     @Override
     public void beforeAll(ExtensionContext context) {
         if (findPrototypeAnnotation(context).isPresent()) {
-            var container = KafkaTestcontainerFactory.container();
+            var annotation = findPrototypeAnnotation(context).get();
+            var topics = loadTopics(annotation.topicsKeys());
+            var container = KafkaTestcontainerFactory.container(annotation.provider(), topics);
             GenericContainerUtil.startContainer(container);
-            var topics = loadTopics(findPrototypeAnnotation(context).get().topicsKeys()); //NOSONAR
-            createTopics(container, topics);
+            container.createTopics();
             THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
-            var container = KafkaTestcontainerFactory.singletonContainer();
-            var topics = loadTopics(findSingletonAnnotation(context).get().topicsKeys()); //NOSONAR
+            var annotation = findSingletonAnnotation(context).get();
+            var topics = loadTopics(annotation.topicsKeys());
+            var container = KafkaTestcontainerFactory.singletonContainer(annotation.provider(), topics);
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
-            } else {
-                deleteTopics(container, topics);
             }
-            createTopics(container, topics);
             THREAD_CONTAINER.set(container);
+        }
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        var container = THREAD_CONTAINER.get();
+        if (container != null && container.isRunning()) {
+            container.deleteTopics();
+            container.createTopics();
         }
     }
 
@@ -121,72 +119,6 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 .collect(Collectors.toList());
     }
 
-    private void createTopics(KafkaContainer container, List<String> topics) {
-        try (var admin = createAdminClient(container)) {
-            var newTopics = topics.stream()
-                    .map(topic -> new NewTopic(topic, 1, (short) 1))
-                    .peek(newTopic -> log.info(newTopic.toString()))
-                    .collect(Collectors.toList());
-            var topicsResult = admin.createTopics(newTopics);
-            // wait until everyone is created or timeout
-            topicsResult.all().get(30, TimeUnit.SECONDS);
-            var adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: " + adminClientTopics);
-            assertThat(adminClientTopics.size())
-                    .isEqualTo(topics.size());
-            // make sure Zookeeper is ready before creating a new topic
-            assertThat(execInContainerKafkaTopicsListCommand(container))
-                    .contains(topics);
-        } catch (ExecutionException | TimeoutException ex) {
-            throw new KafkaStartingException("Error when topic creating, ", ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when topic creating, ", ex);
-        }
-    }
-
-    private void deleteTopics(KafkaContainer container, List<String> topics) {
-        try (var admin = createAdminClient(container)) {
-            var topicsResult = admin.deleteTopics(topics);
-            // wait until everyone is deleted or timeout
-            topicsResult.all().get(30, TimeUnit.SECONDS);
-            var adminClientTopics = admin.listTopics().names().get(30, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: " +
-                    adminClientTopics + " (should be empty)");
-            assertThat(adminClientTopics)
-                    .isEmpty();
-            // make sure all metadata has been deleted successfully from within Zookeeper before creating a new topic
-            execInContainerKafkaTopicsListCommand(container);
-        } catch (ExecutionException | TimeoutException ex) {
-            throw new KafkaStartingException("Error when topic deleting, ", ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when topic deleting, ", ex);
-        }
-    }
-
-    private AdminClient createAdminClient(KafkaContainer container) {
-        var properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, container.getBootstrapServers());
-        return AdminClient.create(properties);
-    }
-
-    private String execInContainerKafkaTopicsListCommand(KafkaContainer container) {
-        var kafkaTopicsListCommand = "/usr/bin/kafka-topics --bootstrap-server localhost:9092 --list";
-        try {
-            var stdout = container.execInContainer("/bin/sh", "-c", kafkaTopicsListCommand)
-                    .getStdout();
-            log.info("Topics list from '/usr/bin/kafka-topics': " +
-                    "[" + stdout.replace("\n", ",") + "]");
-            return stdout;
-        } catch (IOException ex) {
-            throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
-        }
-    }
-
     public static class KafkaTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
 
         @Override
@@ -195,9 +127,9 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
                 List<ContextConfigurationAttributes> configAttributes) {
             return (context, mergedConfig) -> {
                 if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findPrototypeAnnotation(testClass).get().properties());
                 } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties()); //NOSONAR
+                    init(context, findSingletonAnnotation(testClass).get().properties());
                 }
             };
         }

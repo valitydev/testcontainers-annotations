@@ -1,20 +1,17 @@
 package dev.vality.testcontainers.annotations.kafka;
 
+import dev.vality.testcontainers.annotations.kafka.constants.Provider;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 
-import java.util.UUID;
-
-import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
+import java.util.List;
 
 /**
  * Фабрика по созданию контейнеров
- * <p>{@link #create()} создает экземпляр тестконтейнера
- * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
+ * <p>{@link #create(Provider, List)} создает экземпляр тестконтейнера
+ * <p>{@link #getOrCreateSingletonContainer(Provider, List)} создает синглтон тестконтейнера
  *
  * @see KafkaTestcontainerExtension KafkaTestcontainerExtension
  */
@@ -22,17 +19,14 @@ import static dev.vality.testcontainers.annotations.util.SpringApplicationProper
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class KafkaTestcontainerFactory {
 
-    private static final String KAFKA_IMAGE_NAME = "confluentinc/cp-kafka";
-    private static final String TAG_PROPERTY = "testcontainers.kafka.tag";
+    private KafkaContainerExtension kafkaContainer;
 
-    private KafkaContainer kafkaContainer;
-
-    public static KafkaContainer container() {
-        return instance().create();
+    public static KafkaContainerExtension container(Provider provider, List<String> topics) {
+        return instance().create(provider, topics);
     }
 
-    public static KafkaContainer singletonContainer() {
-        return instance().getOrCreateSingletonContainer();
+    public static KafkaContainerExtension singletonContainer(Provider provider, List<String> topics) {
+        return instance().getOrCreateSingletonContainer(provider, topics);
     }
 
     private static KafkaTestcontainerFactory instance() {
@@ -40,24 +34,32 @@ public class KafkaTestcontainerFactory {
     }
 
     @Synchronized
-    private KafkaContainer getOrCreateSingletonContainer() {
+    private KafkaContainerExtension getOrCreateSingletonContainer(Provider provider, List<String> topics) {
         if (kafkaContainer != null) {
             return kafkaContainer;
         }
-        kafkaContainer = create();
+        kafkaContainer = create(provider, topics);
         return kafkaContainer;
     }
 
-    private KafkaContainer create() {
-        try (KafkaContainer container = new KafkaContainer(
-                DockerImageName
-                        .parse(KAFKA_IMAGE_NAME)
-                        .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
-                .withEmbeddedZookeeper()
-                .withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true")) {
-            container.withNetworkAliases("cp-kafka-" + UUID.randomUUID());
-            return container;
-        }
+    private KafkaContainerExtension create(Provider provider, List<String> topics) {
+        return switch (provider) {
+            case BITNAMI -> {
+                try (var container = new BitnamiKafkaContainer(topics)) {
+                    yield container;
+                }
+            }
+            case APACHE -> {
+                try (var container = new ApacheKafkaContainer(topics)) {
+                    yield container;
+                }
+            }
+            case CONFLUENT -> {
+                try (var container = new ConfluentKafkaContainer(topics)) {
+                    yield container;
+                }
+            }
+        };
     }
 
     private static class SingletonHolder {

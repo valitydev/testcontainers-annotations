@@ -1,14 +1,15 @@
 testcontainers:
   postgresql:
-    tag: '12'
+    tag: '17'
   kafka:
-    tag: '6.2.0'
+    bitnami:
+      tag: '3.8'
+    apache:
+      tag: '3.8.0'
+    confluent:
+      tag: '7.8.0'
   clickhouse:
-    tag: 'latest-alpine'
-  ceph:
-    tag: 'v3.0.5-stable-3.0-luminous-centos-7'
-    accessKey: 'test'
-    secretKey: 'test'
+    tag: '23.10.3'
   minio:
     tag: 'RELEASE.2021-10-13T00-23-17Z'
     user: 'minio'

@@ -57,7 +57,7 @@ public class SpringApplicationPropertiesLoader {
             //noinspection unchecked
             return ((Map<String, OriginTrackedValue>) parameters.getPropertySourceLoader().get()
                     .load(classPathResource.getFilename(), classPathResource)
-                    .get(0)
+                    .getFirst()
                     .getSource())
                     .entrySet().stream()
                     .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().getValue()))
