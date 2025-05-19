@@ -21,7 +21,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     private static final String TABLES_QUERY = "SELECT tablename FROM pg_tables " +
             "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'";
     private static final String TRUNCATE_TABLE_QUERY = "TRUNCATE TABLE %s.%s CASCADE";
-    private static final Set<String> EXCLUDE_SCHEMAS = Set.of("information_schema", "public");
+    private static final Set<String> EXCLUDE_SCHEMAS = Set.of("information_schema");
     private static final String PG_ = "pg_";
     private static final String SQL_ = "sql_";
 
