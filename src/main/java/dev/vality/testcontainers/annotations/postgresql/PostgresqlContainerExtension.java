@@ -20,8 +20,8 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     private static final String CURRENT_SCHEMA_QUERY = "SELECT schema_name FROM information_schema.schemata";
     private static final String TABLES_QUERY = "SELECT tablename FROM pg_tables " +
             "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'";
-    private static final String TRUNCATE_TABLE_TEMPLATE = "TRUNCATE TABLE %s.%s CASCADE";
-    private static final Set<String> SYSTEM_SCHEMAS = Set.of("information_schema", "public");
+    private static final String TRUNCATE_TABLE_QUERY = "TRUNCATE TABLE %s.%s CASCADE";
+    private static final Set<String> EXCLUDE_SCHEMAS = Set.of("information_schema", "public");
     private static final String PG_ = "pg_";
     private static final String SQL_ = "sql_";
 
@@ -53,7 +53,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
                 var resultSet = statement.executeQuery(CURRENT_SCHEMA_QUERY)) {
             while (resultSet.next()) {
                 var schema = resultSet.getString("schema_name");
-                if (!SYSTEM_SCHEMAS.contains(schema)
+                if (!EXCLUDE_SCHEMAS.contains(schema)
                         && !schema.startsWith(PG_) && !schema.startsWith(SQL_)) {
                     schemas.add(schema);
                 }
@@ -85,7 +85,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
             statement.execute("SET session_replication_role = 'replica'");
             for (var table : tables) {
                 log.debug("Truncating table: {}", table);
-                statement.execute(String.format(TRUNCATE_TABLE_TEMPLATE, schema, table));
+                statement.execute(String.format(TRUNCATE_TABLE_QUERY, schema, table));
             }
             statement.execute("SET session_replication_role = 'origin'");
         }
