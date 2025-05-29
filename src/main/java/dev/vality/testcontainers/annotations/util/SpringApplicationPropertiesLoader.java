@@ -22,14 +22,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringApplicationPropertiesLoader {
 
+    private static final List<Map.Entry<String, Supplier<PropertySourceLoader>>> TYPES = List.of(
+            Map.entry("yml", YamlPropertySourceLoader::new),
+            Map.entry("yaml", YamlPropertySourceLoader::new),
+            Map.entry("properties", PropertiesPropertySourceLoader::new),
+            Map.entry("xml", PropertiesPropertySourceLoader::new)
+    );
+
     public static String loadDefaultLibraryProperty(String key) {
         var tag = loadPropertiesByFile().get(key);
         if (tag == null) {
-            tag = getSource(PropertiesFileParameters.builder()
-                    .propertySourceLoader(YamlPropertySourceLoader::new)
-                    .name("testcontainers-annotations.yml")
-                    .build())
-                    .get(key);
+            tag = getSource(findPropertiesFileParametersByName("testcontainers-annotations")).get(key);
         }
         return String.valueOf(tag);
     }
@@ -68,26 +71,26 @@ public class SpringApplicationPropertiesLoader {
     }
 
     private static PropertiesFileParameters findPropertiesFileParameters() {
+        return findPropertiesFileParametersByName("application");
+    }
+
+    private static PropertiesFileParameters findPropertiesFileParametersByName(String name) {
         var currentClass = SpringApplicationPropertiesLoader.class;
-        if (currentClass.getResource("/application.yml") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(YamlPropertySourceLoader::new)
-                    .name("application.yml")
-                    .build();
-        } else if (currentClass.getResource("/application.properties") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(PropertiesPropertySourceLoader::new)
-                    .name("application.properties")
-                    .build();
-        } else if (currentClass.getResource("/application.xml") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(PropertiesPropertySourceLoader::new)
-                    .name("application.xml")
-                    .build();
-        } else {
-            throw new NoSuchFileException("Error on load src/main/resources/application.[yml|properties|xml] — " +
-                    "file not found");
-        }
+        return TYPES.stream()
+                .map(entry ->
+                        Map.entry("%s.%s".formatted(name, entry.getKey()), entry.getValue())
+                )
+                .filter(entry -> currentClass.getResource("/" + entry.getKey()) != null)
+                .findFirst()
+                .map(entry -> PropertiesFileParameters.builder()
+                        .propertySourceLoader(entry.getValue())
+                        .name(entry.getKey())
+                        .build())
+                .orElseThrow(() -> new NoSuchFileException(
+                        "Error loading configuration: " +
+                                "src/main/resources/application.[yml|yaml|properties|xml] — " +
+                                "file not found"
+                ));
     }
 
     @Data
