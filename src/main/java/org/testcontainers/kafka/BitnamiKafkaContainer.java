@@ -24,7 +24,7 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
 
     private static final int KAFKA_PORT = 9092;
     private static final int BROKER_PORT = 9093;
-    private static final int LIMIT = 60;
+    private static final int LIMIT = 120;
     private final List<String> topics;
 
     public BitnamiKafkaContainer(DockerImageName dockerImageName, List<String> topics) {
