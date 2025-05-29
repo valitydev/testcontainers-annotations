@@ -17,20 +17,22 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringApplicationPropertiesLoader {
 
+    private static final List<Map.Entry<String, Supplier<PropertySourceLoader>>> TYPES = List.of(
+            Map.entry("yml", YamlPropertySourceLoader::new),
+            Map.entry("yaml", YamlPropertySourceLoader::new),
+            Map.entry("properties", PropertiesPropertySourceLoader::new),
+            Map.entry("xml", PropertiesPropertySourceLoader::new)
+    );
+
     public static String loadDefaultLibraryProperty(String key) {
         var tag = loadPropertiesByFile().get(key);
         if (tag == null) {
-            tag = getSource(PropertiesFileParameters.builder()
-                    .propertySourceLoader(YamlPropertySourceLoader::new)
-                    .name("testcontainers-annotations.yml")
-                    .build())
-                    .get(key);
+            tag = getSource(findPropertiesFileParametersByName("testcontainers-annotations")).get(key);
         }
         return String.valueOf(tag);
     }
@@ -69,12 +71,14 @@ public class SpringApplicationPropertiesLoader {
     }
 
     private static PropertiesFileParameters findPropertiesFileParameters() {
+        return findPropertiesFileParametersByName("application");
+    }
+
+    private static PropertiesFileParameters findPropertiesFileParametersByName(String name) {
         var currentClass = SpringApplicationPropertiesLoader.class;
-        return Stream.<Map.Entry<String, Supplier<PropertySourceLoader>>>of(
-                        Map.entry("application.yml", YamlPropertySourceLoader::new),
-                        Map.entry("application.yaml", YamlPropertySourceLoader::new),
-                        Map.entry("application.properties", PropertiesPropertySourceLoader::new),
-                        Map.entry("application.xml", PropertiesPropertySourceLoader::new)
+        return TYPES.stream()
+                .map(entry ->
+                        Map.entry("%s.%s".formatted(name, entry.getKey()), entry.getValue())
                 )
                 .filter(entry -> currentClass.getResource("/" + entry.getKey()) != null)
                 .findFirst()
