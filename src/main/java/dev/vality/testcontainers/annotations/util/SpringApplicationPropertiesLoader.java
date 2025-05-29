@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,25 +70,23 @@ public class SpringApplicationPropertiesLoader {
 
     private static PropertiesFileParameters findPropertiesFileParameters() {
         var currentClass = SpringApplicationPropertiesLoader.class;
-        if (currentClass.getResource("/application.yml") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(YamlPropertySourceLoader::new)
-                    .name("application.yml")
-                    .build();
-        } else if (currentClass.getResource("/application.properties") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(PropertiesPropertySourceLoader::new)
-                    .name("application.properties")
-                    .build();
-        } else if (currentClass.getResource("/application.xml") != null) {
-            return PropertiesFileParameters.builder()
-                    .propertySourceLoader(PropertiesPropertySourceLoader::new)
-                    .name("application.xml")
-                    .build();
-        } else {
-            throw new NoSuchFileException("Error on load src/main/resources/application.[yml|properties|xml] — " +
-                    "file not found");
-        }
+        return Stream.<Map.Entry<String, Supplier<PropertySourceLoader>>>of(
+                        Map.entry("application.yml", YamlPropertySourceLoader::new),
+                        Map.entry("application.yaml", YamlPropertySourceLoader::new),
+                        Map.entry("application.properties", PropertiesPropertySourceLoader::new),
+                        Map.entry("application.xml", PropertiesPropertySourceLoader::new)
+                )
+                .filter(entry -> currentClass.getResource("/" + entry.getKey()) != null)
+                .findFirst()
+                .map(entry -> PropertiesFileParameters.builder()
+                        .propertySourceLoader(entry.getValue())
+                        .name(entry.getKey())
+                        .build())
+                .orElseThrow(() -> new NoSuchFileException(
+                        "Error loading configuration: " +
+                                "src/main/resources/application.[yml|yaml|properties|xml] — " +
+                                "file not found"
+                ));
     }
 
     @Data
