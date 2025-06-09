@@ -51,4 +51,9 @@ public @interface PostgresqlTestcontainerSingleton {
      */
     String[] properties() default {};
 
+    /**
+     * Очищать таблицы между тестами
+     * @return true - данные между тестами удаляются из БД
+     */
+    boolean truncateTables() default true;
 }
