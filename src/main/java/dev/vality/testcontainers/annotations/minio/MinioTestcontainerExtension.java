@@ -71,7 +71,7 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
     }
 
     private static Optional<MinioTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), MinioTestcontainer.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), MinioTestcontainer.class);
     }
 
     private static Optional<MinioTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
@@ -79,7 +79,7 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
     }
 
     private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), MinioTestcontainerSingleton.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), MinioTestcontainerSingleton.class);
     }
 
     private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {

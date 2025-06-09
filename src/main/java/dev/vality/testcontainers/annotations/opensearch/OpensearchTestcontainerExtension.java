@@ -68,7 +68,7 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
     }
 
     private static Optional<OpensearchTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), OpensearchTestcontainer.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), OpensearchTestcontainer.class);
     }
 
     private static Optional<OpensearchTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
@@ -76,7 +76,7 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
     }
 
     private static Optional<OpensearchTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), OpensearchTestcontainerSingleton.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), OpensearchTestcontainerSingleton.class);
     }
 
     private static Optional<OpensearchTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
