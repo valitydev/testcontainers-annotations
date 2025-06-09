@@ -97,7 +97,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     }
 
     private static Optional<KafkaTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainer.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), KafkaTestcontainer.class);
     }
 
     private static Optional<KafkaTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
@@ -105,7 +105,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     }
 
     private static Optional<KafkaTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), KafkaTestcontainerSingleton.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), KafkaTestcontainerSingleton.class);
     }
 
     private static Optional<KafkaTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {

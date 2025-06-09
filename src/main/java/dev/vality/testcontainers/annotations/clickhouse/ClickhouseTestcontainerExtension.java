@@ -82,7 +82,7 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     }
 
     private static Optional<ClickhouseTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), ClickhouseTestcontainer.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), ClickhouseTestcontainer.class);
     }
 
     private static Optional<ClickhouseTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
@@ -90,7 +90,7 @@ public class ClickhouseTestcontainerExtension implements BeforeAllCallback, Afte
     }
 
     private static Optional<ClickhouseTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), ClickhouseTestcontainerSingleton.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), ClickhouseTestcontainerSingleton.class);
     }
 
     private static Optional<ClickhouseTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
