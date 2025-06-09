@@ -87,7 +87,7 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
     }
 
     private static Optional<PostgresqlTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getElement(), PostgresqlTestcontainerSingleton.class);
+        return AnnotationSupport.findAnnotation(context.getTestClass(), PostgresqlTestcontainerSingleton.class);
     }
 
     private static Optional<PostgresqlTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
