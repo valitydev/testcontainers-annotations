@@ -58,7 +58,9 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
     @Override
     public void beforeEach(ExtensionContext context) {
         var container = THREAD_CONTAINER.get();
-        if (container != null && container.isRunning()) {
+        var annotation = findSingletonAnnotation(context);
+        var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
+        if (container != null && container.isRunning() && truncateTablesFlag) {
             container.cleanupDatabaseTables();
         }
     }
