@@ -8,7 +8,11 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
@@ -34,10 +38,10 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     }
 
     @SneakyThrows
-    public void cleanupDatabaseTables() {
+    public void cleanupDatabaseTables(List<String> excludedTables) {
         try (var connection = DriverManager.getConnection(getJdbcUrl(), getUsername(), getPassword())) {
             for (var schema : getSchemas(connection)) {
-                var tables = getUserTables(connection, schema);
+                var tables = getUserTables(connection, schema, excludedTables);
                 if (!tables.isEmpty()) {
                     truncateTables(connection, schema, tables);
                 }
@@ -63,14 +67,17 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     }
 
     @SneakyThrows
-    private List<String> getUserTables(Connection connection, String schema) {
+    private List<String> getUserTables(Connection connection, String schema, List<String> excludedTables) {
         var tables = new ArrayList<String>();
         try (var statement = connection.prepareStatement(TABLES_QUERY)) {
             statement.setString(1, schema);
             try (var resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     var tableName = resultSet.getString("tablename");
-                    if (!tableName.startsWith(PG_) && !tableName.startsWith(SQL_)) {
+                    boolean isTruncatable = !tableName.startsWith(PG_)
+                            && !tableName.startsWith(SQL_)
+                            && !excludedTables.contains(tableName);
+                    if (isTruncatable) {
                         tables.add(tableName);
                     }
                 }
