@@ -61,7 +61,10 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
         var annotation = findSingletonAnnotation(context);
         var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
         if (container != null && container.isRunning() && truncateTablesFlag) {
-            container.cleanupDatabaseTables();
+            var excludedTables = annotation
+                    .map(a -> List.of(a.excludeTruncateTables()))
+                    .orElse(List.of());
+            container.cleanupDatabaseTables(excludedTables);
         }
     }
 
