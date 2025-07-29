@@ -6,6 +6,7 @@ on:
       - 'master'
       - 'main'
       - 'rc/**'
+      - 'epic-1'
 
 jobs:
   deploy:
