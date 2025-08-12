@@ -58,13 +58,24 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
     @Override
     public void beforeEach(ExtensionContext context) {
         var container = THREAD_CONTAINER.get();
-        var annotation = findSingletonAnnotation(context);
-        var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
-        if (container != null && container.isRunning() && truncateTablesFlag) {
-            var excludedTables = annotation
-                    .map(a -> List.of(a.excludeTruncateTables()))
-                    .orElse(List.of());
-            container.cleanupDatabaseTables(excludedTables);
+        if (findPrototypeAnnotation(context).isPresent()) {
+            var annotation = findPrototypeAnnotation(context);
+            var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
+            if (container != null && container.isRunning() && truncateTablesFlag) {
+                var excludedTables = annotation
+                        .map(a -> List.of(a.excludeTruncateTables()))
+                        .orElse(List.of());
+                container.cleanupDatabaseTables(excludedTables);
+            }
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            var annotation = findSingletonAnnotation(context);
+            var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
+            if (container != null && container.isRunning() && truncateTablesFlag) {
+                var excludedTables = annotation
+                        .map(a -> List.of(a.excludeTruncateTables()))
+                        .orElse(List.of());
+                container.cleanupDatabaseTables(excludedTables);
+            }
         }
     }
 
