@@ -50,7 +50,10 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
             var container = PostgresqlTestcontainerFactory.singletonContainer();
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
+            } else {
+                container.cleanupDatabaseTables(List.of());
             }
+
             THREAD_CONTAINER.set(container);
         }
     }
@@ -59,20 +62,18 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
     public void beforeEach(ExtensionContext context) {
         var container = THREAD_CONTAINER.get();
         if (findPrototypeAnnotation(context).isPresent()) {
-            var annotation = findPrototypeAnnotation(context);
-            var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
-            if (container != null && container.isRunning() && truncateTablesFlag) {
-                var excludedTables = annotation
-                        .map(a -> List.of(a.excludeTruncateTables()))
+            var annotation = findPrototypeAnnotation(context).get();
+            if (container != null && container.isRunning() && annotation.truncateTables()) {
+                var excludedTables = Optional.ofNullable(annotation.excludeTruncateTables())
+                        .map(List::of)
                         .orElse(List.of());
                 container.cleanupDatabaseTables(excludedTables);
             }
         } else if (findSingletonAnnotation(context).isPresent()) {
-            var annotation = findSingletonAnnotation(context);
-            var truncateTablesFlag = annotation.isEmpty() || annotation.get().truncateTables();
-            if (container != null && container.isRunning() && truncateTablesFlag) {
-                var excludedTables = annotation
-                        .map(a -> List.of(a.excludeTruncateTables()))
+            var annotation = findSingletonAnnotation(context).get();
+            if (container != null && container.isRunning() && annotation.truncateTables()) {
+                var excludedTables = Optional.ofNullable(annotation.excludeTruncateTables())
+                        .map(List::of)
                         .orElse(List.of());
                 container.cleanupDatabaseTables(excludedTables);
             }
