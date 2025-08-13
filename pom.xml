@@ -68,7 +68,6 @@
             <groupId>dev.vality</groupId>
             <artifactId>kafka-common-lib</artifactId>
             <version>${kafka-common-lib.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.clickhouse</groupId>
