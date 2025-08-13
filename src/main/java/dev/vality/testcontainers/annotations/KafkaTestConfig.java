@@ -1,6 +1,6 @@
 package dev.vality.testcontainers.annotations;
 
-import dev.vality.testcontainers.annotations.kafka.config.KafkaProducerConfig;
+import dev.vality.testcontainers.annotations.kafka.config.KafkaProducerTestConfig;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.lang.annotation.ElementType;
@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ContextConfiguration(classes = {KafkaProducerConfig.class})
-public @interface KafkaConfig {
+@ContextConfiguration(classes = {KafkaProducerTestConfig.class})
+public @interface KafkaTestConfig {
 }

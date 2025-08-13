@@ -21,8 +21,8 @@ import java.util.UUID;
  *
  * @see KafkaProducer KafkaProducer
  */
-@TestConfiguration
-public class KafkaProducerConfig {
+@TestConfiguration("kafkaProducerTestContainersAnnotationsConfig")
+public class KafkaProducerTestConfig {
 
     @Bean
     public String bootstrapAddress(@Value("${spring.kafka.bootstrap-servers:}") String primaryLocation,
