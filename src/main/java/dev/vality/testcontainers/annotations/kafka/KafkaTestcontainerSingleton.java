@@ -127,7 +127,7 @@ public @interface KafkaTestcontainerSingleton {
      */
     String[] topicsKeys();
 
-    Provider provider() default Provider.BITNAMI;
+    Provider provider() default Provider.CONFLUENT;
 
     /**
      * Очищать топики между тестами

@@ -24,8 +24,12 @@ public class ApacheKafkaContainer extends KafkaContainer implements KafkaContain
                 .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)));
         this.topics = topics;
         withEnv("ALLOW_PLAINTEXT_LISTENER", "yes");
+        withEnv("KAFKA_CFG_DELETE_TOPIC_ENABLE", "true");
         withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true");
+        withEnv("DELETE_TOPIC_ENABLE", "true");
         withEnv("KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE", "false");
+        withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false");
+        withEnv("KAFKA_CFG_NODE_ID", "1");
         withNetworkAliases("kafka-" + UUID.randomUUID());
         withNetwork(Network.SHARED);
     }
