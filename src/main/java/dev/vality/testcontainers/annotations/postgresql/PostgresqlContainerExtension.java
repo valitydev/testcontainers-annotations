@@ -8,11 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
@@ -23,7 +19,7 @@ public class PostgresqlContainerExtension extends PostgreSQLContainer<Postgresql
     private static final String TAG_PROPERTY = "testcontainers.postgresql.tag";
     private static final String CURRENT_SCHEMA_QUERY = "SELECT schema_name FROM information_schema.schemata";
     private static final String TABLES_QUERY = "SELECT tablename FROM pg_tables " +
-            "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'";
+            "WHERE schemaname = ? AND tablename NOT LIKE 'flyway%'AND tablename NOT LIKE 'schema_version'";
     private static final String TRUNCATE_TABLE_QUERY = "TRUNCATE TABLE %s.%s CASCADE";
     private static final Set<String> EXCLUDE_SCHEMAS = Set.of("information_schema");
     private static final String PG_ = "pg_";
