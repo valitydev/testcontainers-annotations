@@ -46,4 +46,19 @@ public @interface PostgresqlTestcontainer {
      */
     String[] properties() default {};
 
+    /**
+     * Очищать таблицы между тестами
+     *
+     * @return true - данные между тестами удаляются из БД
+     */
+    boolean truncateTables() default true;
+
+    /**
+     * Таблицы, которые не нужно очищать между тестами.
+     * Используется только если {@link #truncateTables()} = true
+     * <p>
+     * пример — excludeTruncateTables = {"schema_history", "reference_data"}
+     */
+    String[] excludeTruncateTables() default {};
+
 }

@@ -127,6 +127,21 @@ public @interface KafkaTestcontainerSingleton {
      */
     String[] topicsKeys();
 
-    Provider provider() default Provider.BITNAMI;
+    Provider provider() default Provider.CONFLUENT;
+
+    /**
+     * Очищать топики между тестами
+     *
+     * @return true - данные между тестами удаляются из кафки
+     */
+    boolean truncateTopics() default true;
+
+    /**
+     * Топики, которые не нужно очищать между тестами.
+     * Используется только если {@link #truncateTopics()} = true
+     * <p>
+     * пример — excludeTruncateTopics = {"kafka.topics.invoicing.id"}
+     */
+    String[] excludeTruncateTopics() default {};
 
 }

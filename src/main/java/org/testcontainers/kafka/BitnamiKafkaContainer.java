@@ -35,8 +35,12 @@ public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContaine
         withEnv(KafkaHelper.envVars());
         withEnv("KAFKA_CFG_CONTROLLER_LISTENER_NAMES", "CONTROLLER");
         withEnv("ALLOW_PLAINTEXT_LISTENER", "yes");
+        withEnv("KAFKA_CFG_DELETE_TOPIC_ENABLE", "true");
         withEnv("KAFKA_DELETE_TOPIC_ENABLE", "true");
+        withEnv("DELETE_TOPIC_ENABLE", "true");
         withEnv("KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE", "false");
+        withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false");
+        withEnv("KAFKA_CFG_NODE_ID", "1");
         withCommand(KafkaHelper.COMMAND);
         waitingFor(new WaitAllStrategy()
                 .withStrategy(Wait.forLogMessage(".*Welcome to the Bitnami kafka container.*", 1))

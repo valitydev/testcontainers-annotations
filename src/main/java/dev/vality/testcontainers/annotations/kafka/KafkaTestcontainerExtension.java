@@ -61,7 +61,7 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var topics = loadTopics(annotation.topicsKeys());
             var container = KafkaTestcontainerFactory.container(annotation.provider(), topics);
             GenericContainerUtil.startContainer(container);
-            container.createTopics();
+            container.createTopics(List.of());
             THREAD_CONTAINER.set(container);
         } else if (findSingletonAnnotation(context).isPresent()) {
             var annotation = findSingletonAnnotation(context).get();
@@ -69,7 +69,10 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var container = KafkaTestcontainerFactory.singletonContainer(annotation.provider(), topics);
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
+            } else {
+                container.deleteTopics(List.of());
             }
+            container.createTopics(List.of());
             THREAD_CONTAINER.set(container);
         }
     }
@@ -77,9 +80,24 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
     @Override
     public void beforeEach(ExtensionContext context) {
         var container = THREAD_CONTAINER.get();
-        if (container != null && container.isRunning()) {
-            container.deleteTopics();
-            container.createTopics();
+        if (findPrototypeAnnotation(context).isPresent()) {
+            var annotation = findPrototypeAnnotation(context).get();
+            if (container != null && container.isRunning() && annotation.truncateTopics()) {
+                var excludedTopics = Optional.ofNullable(annotation.excludeTruncateTopics())
+                        .map(List::of)
+                        .orElse(List.of());
+                container.deleteTopics(excludedTopics);
+                container.createTopics(excludedTopics);
+            }
+        } else if (findSingletonAnnotation(context).isPresent()) {
+            var annotation = findSingletonAnnotation(context).get();
+            if (container != null && container.isRunning() && annotation.truncateTopics()) {
+                var excludedTopics = Optional.ofNullable(annotation.excludeTruncateTopics())
+                        .map(List::of)
+                        .orElse(List.of());
+                container.deleteTopics(excludedTopics);
+                container.createTopics(excludedTopics);
+            }
         }
     }
 

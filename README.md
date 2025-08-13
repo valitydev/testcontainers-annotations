@@ -1,5 +1,7 @@
 # testcontainers-annotations-junit5
 
+[![Maven Central](https://img.shields.io/maven-central/v/dev.vality/testcontainers-annotations.svg)](https://central.sonatype.com/artifact/dev.vality/testcontainers-annotations)
+
 Репозиторий с аннотациями, которые подключают и запускают тестконтейнеры
 ([TestContainers](https://github.com/testcontainers/testcontainers-java)) и инициализируют `runtime` настройки
 тестконтейнеров (`url`, `username`, `password`, etc)

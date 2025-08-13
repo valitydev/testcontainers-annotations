@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <artifactId>testcontainers-annotations</artifactId>
-    <version>3.2.1</version>
+    <version>3.3.0</version>
 
     <name>testcontainers-annotations</name>
     <description>testcontainers-annotations</description>
@@ -68,7 +68,6 @@
             <groupId>dev.vality</groupId>
             <artifactId>kafka-common-lib</artifactId>
             <version>${kafka-common-lib.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.clickhouse</groupId>
