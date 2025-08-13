@@ -21,7 +21,7 @@ import org.springframework.kafka.core.KafkaTemplate;
  *     ...
  * }</pre>
  *
- * @see KafkaProducerConfig KafkaProducerConfig
+ * @see KafkaProducerTestConfig KafkaProducerConfig
  */
 @RequiredArgsConstructor
 @Slf4j

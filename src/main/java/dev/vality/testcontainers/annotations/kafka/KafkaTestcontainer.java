@@ -1,6 +1,6 @@
 package dev.vality.testcontainers.annotations.kafka;
 
-import dev.vality.testcontainers.annotations.KafkaConfig;
+import dev.vality.testcontainers.annotations.KafkaTestConfig;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
 import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
 import dev.vality.testcontainers.annotations.kafka.constants.Provider;
@@ -58,7 +58,7 @@ import java.lang.annotation.Target;
  *   ...
  * }}</pre>
  * <p>В примере ниже {@link KafkaTestcontainer} подключается к
- * {@link PostgresqlTestcontainer} и {@link KafkaConfig},
+ * {@link PostgresqlTestcontainer} и {@link KafkaTestConfig},
  * таким образом создается удобная обертка, которую можно использовать для набора тестов
  * <pre> {@code
  * @Target({ElementType.TYPE})
@@ -91,7 +91,7 @@ import java.lang.annotation.Target;
  * @see KafkaTestcontainerExtension KafkaTestcontainerExtension
  * @see KafkaProducer KafkaProducer
  * @see KafkaConsumer KafkaConsumer
- * @see KafkaConfig @KafkaSpringBootTest
+ * @see KafkaTestConfig @KafkaSpringBootTest
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
