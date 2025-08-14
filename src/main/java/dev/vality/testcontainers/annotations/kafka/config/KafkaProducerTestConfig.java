@@ -7,6 +7,7 @@ import org.apache.thrift.TBase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class KafkaProducerTestConfig {
 
     @Bean
+    @Primary
     public String bootstrapAddress(@Value("${spring.kafka.bootstrap-servers:}") String primaryLocation,
                                    @Value("${kafka.bootstrap-servers:}") String secondaryLocation) {
         return !ObjectUtils.isEmpty(primaryLocation) ? primaryLocation : secondaryLocation;
