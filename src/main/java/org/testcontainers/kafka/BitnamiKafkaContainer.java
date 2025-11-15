@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @SuppressWarnings("LineLength")
+@Deprecated
 public class BitnamiKafkaContainer extends GenericContainer<BitnamiKafkaContainer> implements KafkaContainerExtension {
 
     private static final int KAFKA_PORT = 9092;

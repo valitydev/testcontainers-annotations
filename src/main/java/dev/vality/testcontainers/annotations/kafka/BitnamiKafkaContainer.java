@@ -8,6 +8,7 @@ import java.util.List;
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
 @Slf4j
+@Deprecated
 public class BitnamiKafkaContainer extends org.testcontainers.kafka.BitnamiKafkaContainer
         implements KafkaContainerExtension {
 
