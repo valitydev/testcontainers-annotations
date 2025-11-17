@@ -44,11 +44,6 @@ public class KafkaTestcontainerFactory {
 
     private KafkaContainerExtension create(Provider provider, List<String> topics) {
         return switch (provider) {
-            case BITNAMI -> {
-                try (var container = new BitnamiKafkaContainer(topics)) {
-                    yield container;
-                }
-            }
             case APACHE -> {
                 try (var container = new ApacheKafkaContainer(topics)) {
                     yield container;

@@ -3,7 +3,7 @@ package dev.vality.testcontainers.annotations.util;
 import dev.vality.geck.common.util.TypeUtil;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

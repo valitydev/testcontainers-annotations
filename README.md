@@ -15,7 +15,6 @@
 
 ```
 postgres
-bitnami/kafka
 apache/kafka
 confluentinc/kafka
 clickhouse/clickhouse-server
@@ -40,8 +39,6 @@ testcontainers:
   postgresql:
     tag: '17'
   kafka:
-    bitnami:
-      tag: '3.8'
     apache:
       tag: '3.8.0'
     confluent:

@@ -2,6 +2,7 @@ package dev.vality.testcontainers.annotations.clickhouse;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -52,6 +53,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(ClickhouseTestcontainerExtension.class)
+@DirtiesContext
 public @interface ClickhouseTestcontainerSingleton {
 
     /**
