@@ -98,8 +98,7 @@ public class RandomBeans {
                 parameters.excludeField(field -> field.getName().equals(excludedField));
             }
         }
-        parameters.seed(123L)
-                .objectPoolSize(100)
+        parameters.objectPoolSize(100)
                 .randomizationDepth(3)
                 .charset(StandardCharsets.UTF_8)
                 .stringLengthRange(5, 50)
