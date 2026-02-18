@@ -20,20 +20,34 @@ import java.util.stream.Stream;
 
 public class RandomBeans {
 
+    public static final long DEFAULT_SEED = 123L;
+
     public static <T> T random(Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(excludedFields);
+        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
+        var easyRandom = new EasyRandom(parameters);
+        return easyRandom.nextObject(type);
+    }
+
+    public static <T> T random(Long seed, Class<T> type, String... excludedFields) {
+        var parameters = createParametersWithExcludedFields(seed, excludedFields);
         var easyRandom = new EasyRandom(parameters);
         return easyRandom.nextObject(type);
     }
 
     public static <T> List<T> randomListOf(int amount, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(excludedFields);
+        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
+        var easyRandom = new EasyRandom(parameters);
+        return easyRandom.objects(type, amount).collect(Collectors.toList());
+    }
+
+    public static <T> List<T> randomListOf(Long seed, int amount, Class<T> type, String... excludedFields) {
+        var parameters = createParametersWithExcludedFields(seed, excludedFields);
         var easyRandom = new EasyRandom(parameters);
         return easyRandom.objects(type, amount).collect(Collectors.toList());
     }
 
     public static <T> Stream<T> randomStreamOf(int amount, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(excludedFields);
+        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
         var easyRandom = new EasyRandom(parameters);
         return easyRandom.objects(type, amount);
     }
@@ -56,7 +70,7 @@ public class RandomBeans {
         return mockTBaseProcessor.process(type.getConstructor().newInstance(), new TBaseHandler<>(type));
     }
 
-    private static EasyRandomParameters createParametersWithExcludedFields(String... excludedFields) {
+    private static EasyRandomParameters createParametersWithExcludedFields(Long seed, String... excludedFields) {
         var parameters = new EasyRandomParameters();
         parameters.randomize(LocalDateTime.class, () -> {
             var dateTime = LocalDateTime.now();
@@ -98,7 +112,8 @@ public class RandomBeans {
                 parameters.excludeField(field -> field.getName().equals(excludedField));
             }
         }
-        parameters.objectPoolSize(100)
+        parameters.seed(seed)
+                .objectPoolSize(100)
                 .randomizationDepth(3)
                 .charset(StandardCharsets.UTF_8)
                 .stringLengthRange(5, 50)
