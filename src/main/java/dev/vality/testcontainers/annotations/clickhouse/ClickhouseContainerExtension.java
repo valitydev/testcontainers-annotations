@@ -7,11 +7,13 @@ import org.testcontainers.clickhouse.ClickHouseContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -76,7 +78,9 @@ public class ClickhouseContainerExtension extends ClickHouseContainer {
             var split = sql.split(";");
             for (var exec : split) {
                 if (exec != null && !exec.trim().isEmpty()) {
-                    connection.createStatement().execute(exec);
+                    try (var statement = connection.createStatement()) {
+                        statement.execute(exec);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -87,11 +91,14 @@ public class ClickhouseContainerExtension extends ClickHouseContainer {
 
     private String getFile(String fileName) {
         var classLoader = ClickhouseContainerExtension.class.getClassLoader();
-        try {
-            return IOUtils.toString(classLoader.getResourceAsStream(fileName), StandardCharsets.UTF_8);
+        try (var inputStream = Optional.ofNullable(classLoader.getResourceAsStream(fileName))
+                .orElseThrow(() -> new ClickhouseStartingException(
+                        "Migration file not found: " + fileName,
+                        new FileNotFoundException(fileName)))) {
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Error when getFile e: ", e);
-            return "";
+            throw new ClickhouseStartingException("Error when reading migration file: " + fileName, e);
         }
     }
 }

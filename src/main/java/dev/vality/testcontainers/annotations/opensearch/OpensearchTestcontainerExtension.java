@@ -47,10 +47,10 @@ public class OpensearchTestcontainerExtension implements BeforeAllCallback, Afte
         var container = THREAD_CONTAINER.get();
         if (container != null && container.isRunning()) {
             var builder = RestClient.builder(new HttpHost(container.getHost(), container.getFirstMappedPort()));
-            var client = builder.build();
-            var deleteRequest = new Request("DELETE", "/*");
-            client.performRequest(deleteRequest);
-            client.close();
+            try (var client = builder.build()) {
+                var deleteRequest = new Request("DELETE", "/*");
+                client.performRequest(deleteRequest);
+            }
         }
     }
 

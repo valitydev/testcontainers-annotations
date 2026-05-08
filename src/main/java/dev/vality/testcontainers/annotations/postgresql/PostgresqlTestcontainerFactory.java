@@ -38,9 +38,7 @@ public class PostgresqlTestcontainerFactory {
     }
 
     private PostgresqlContainerExtension create() {
-        try (var container = new PostgresqlContainerExtension()) {
-            return container;
-        }
+        return new PostgresqlContainerExtension();
     }
 
     private static class SingletonHolder {
