@@ -32,6 +32,38 @@ opensearchproject/opensearch
 | @MinioTestcontainer      | @MinioTestcontainerSingleton      |
 | @OpensearchTestcontainer | @OpensearchTestcontainerSingleton |
 
+## Embedded режим без Docker
+
+Для легковесных интеграционных тестов можно использовать embedded-аннотации. Библиотека сама запускает локальный
+backend,
+инициализирует runtime-настройки в Spring context и очищает данные между test methods.
+
+| embedded                | backend                         |
+|-------------------------|---------------------------------|
+| @EmbeddedPostgresqlTest | io.zonky.test embedded-postgres |
+| @EmbeddedKafkaTest      | spring-kafka-test EmbeddedKafka |
+
+Пример замены Docker Kafka/PostgreSQL на embedded:
+
+```java
+@EmbeddedPostgresqlTest
+@EmbeddedKafkaTest(
+        topics = {
+                "magista-invoicing-test",
+                "magista-invoice-template-test"
+        },
+        properties = {
+                "kafka.topics.invoicing.id=magista-invoicing-test",
+                "kafka.topics.invoicing.consume.enabled=true",
+                "kafka.topics.invoice-template.id=magista-invoice-template-test",
+                "kafka.topics.invoice-template.consume.enabled=true"
+        }
+)
+@SpringBootTest
+class KafkaListenerTest {
+}
+```
+
 Для изменения `docker image tag`, который используется тестконтейнерами нужно переопределить параметры в `application.yml`:
 
 ```yml
