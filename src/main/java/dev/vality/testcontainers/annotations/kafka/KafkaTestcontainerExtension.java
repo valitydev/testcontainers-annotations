@@ -69,10 +69,14 @@ public class KafkaTestcontainerExtension implements BeforeAllCallback, AfterAllC
             var container = KafkaTestcontainerFactory.singletonContainer(annotation.provider(), topics);
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
-            } else {
-                container.deleteTopics(List.of());
+                container.createTopics(List.of());
+            } else if (annotation.truncateTopics()) {
+                var excludedTopics = Optional.ofNullable(annotation.excludeTruncateTopics())
+                        .map(List::of)
+                        .orElse(List.of());
+                container.deleteTopics(excludedTopics);
+                container.createTopics(excludedTopics);
             }
-            container.createTopics(List.of());
             THREAD_CONTAINER.set(container);
         }
     }

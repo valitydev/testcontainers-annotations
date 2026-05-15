@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <artifactId>testcontainers-annotations</artifactId>
-    <version>4.1.3</version>
+    <version>4.2.0</version>
 
     <name>testcontainers-annotations</name>
     <description>testcontainers-annotations</description>
@@ -43,6 +43,7 @@
         <kafka-common-lib.version>0.0.3</kafka-common-lib.version>
         <geck.version>1.0.2</geck.version>
         <lombok.version>1.18.38</lombok.version>
+        <embedded-postgres.version>2.0.3</embedded-postgres.version>
         <checkstyle.config.suppressions.path>./src/main/resources/checkstyle/checkstyle-suppressions.xml
         </checkstyle.config.suppressions.path>
     </properties>
@@ -180,6 +181,15 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-postgres</artifactId>
+            <version>${embedded-postgres.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>

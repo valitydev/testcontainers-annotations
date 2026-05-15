@@ -50,8 +50,11 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
             var container = PostgresqlTestcontainerFactory.singletonContainer();
             if (!container.isRunning()) {
                 GenericContainerUtil.startContainer(container);
-            } else {
-                container.cleanupDatabaseTables(List.of());
+            } else if (findSingletonAnnotation(context).get().truncateTables()) {
+                var excludedTables = Optional.ofNullable(findSingletonAnnotation(context).get().excludeTruncateTables())
+                        .map(List::of)
+                        .orElse(List.of());
+                container.cleanupDatabaseTables(excludedTables);
             }
 
             THREAD_CONTAINER.set(container);

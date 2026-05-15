@@ -54,7 +54,7 @@ public class MinioTestcontainerFactory {
     }
 
     private GenericContainer<?> create() {
-        try (GenericContainer<?> container = new GenericContainer<>(
+        GenericContainer<?> container = new GenericContainer<>(
                 DockerImageName
                         .parse(MINIO_IMAGE_NAME)
                         .withTag(loadDefaultLibraryProperty(TAG_PROPERTY)))
@@ -62,11 +62,10 @@ public class MinioTestcontainerFactory {
                 .withEnv("MINIO_ROOT_USER", loadDefaultLibraryProperty(MINIO_USER))
                 .withEnv("MINIO_ROOT_PASSWORD", loadDefaultLibraryProperty(MINIO_PASSWORD))
                 .withCommand("server /data{1...12}")
-                .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)))) {
-            container.withNetworkAliases("minio-" + UUID.randomUUID());
-            container.withNetwork(Network.SHARED);
-            return container;
-        }
+                .waitingFor(getWaitStrategy("/minio/health/live", 200, 9000, Duration.ofMinutes(1)));
+        container.withNetworkAliases("minio-" + UUID.randomUUID());
+        container.withNetwork(Network.SHARED);
+        return container;
     }
 
     private static class SingletonHolder {

@@ -30,7 +30,12 @@ public class SpringApplicationPropertiesLoader {
     );
 
     public static String loadDefaultLibraryProperty(String key) {
-        var tag = loadPropertiesByFile().get(key);
+        Object tag;
+        try {
+            tag = loadPropertiesByFile().get(key);
+        } catch (NoSuchFileException ex) {
+            tag = null;
+        }
         if (tag == null) {
             tag = getSource(findPropertiesFileParametersByName("testcontainers-annotations")).get(key);
         }

@@ -40,9 +40,7 @@ public class ClickhouseTestcontainerFactory {
     }
 
     private ClickhouseContainerExtension create(String databaseName, String[] migrations) {
-        try (var container = new ClickhouseContainerExtension(databaseName, migrations)) {
-            return container;
-        }
+        return new ClickhouseContainerExtension(databaseName, migrations);
     }
 
     private static class SingletonHolder {

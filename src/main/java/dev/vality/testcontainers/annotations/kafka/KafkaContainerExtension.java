@@ -38,7 +38,17 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
             var topics = topics().stream()
                     .filter(topic -> !excludedTopics.contains(topic))
                     .toList();
-            var newTopics = topics.stream()
+            if (topics.isEmpty()) {
+                return;
+            }
+            var existingTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            var topicsToCreate = topics.stream()
+                    .filter(topic -> !existingTopics.contains(topic))
+                    .toList();
+            if (topicsToCreate.isEmpty()) {
+                return;
+            }
+            var newTopics = topicsToCreate.stream()
                     .map(topic -> new NewTopic(topic, 1, (short) 1))
                     .peek(newTopic -> log.info(newTopic.toString()))
                     .collect(Collectors.toList());
@@ -47,12 +57,12 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
                     .atMost(Duration.ofSeconds(WAIT_TIMEOUT))
                     .pollInterval(Duration.ofSeconds(2))
                     .untilAsserted(() -> topicsResult.all().get(1, TimeUnit.SECONDS));
-            var adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: {}", adminClientTopics);
-            assertThat(adminClientTopics.size())
-                    .isEqualTo(topics.size());
+            var topicsAfterCreate = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: {}", topicsAfterCreate);
+            assertThat(topicsAfterCreate)
+                    .containsAll(topicsToCreate);
             var actual = execInContainerKafkaTopicsListCommand();
-            assertThat(topics.stream().allMatch(actual::contains))
+            assertThat(topicsToCreate.stream().allMatch(actual::contains))
                     .isTrue();
         } catch (ExecutionException | TimeoutException ex) {
             throw new KafkaStartingException("Error when topic creating, ", ex);
@@ -64,24 +74,30 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
 
     default void deleteTopics(List<String> excludedTopics) {
         try (var admin = createAdminClient()) {
-            var adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            if (adminClientTopics.isEmpty()) {
+            var existingTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            if (existingTopics.isEmpty()) {
                 return;
             }
             var topics = topics().stream()
                     .filter(topic -> !excludedTopics.contains(topic))
                     .toList();
-            var topicsResult = admin.deleteTopics(topics);
+            var topicsToDelete = topics.stream()
+                    .filter(existingTopics::contains)
+                    .toList();
+            if (topicsToDelete.isEmpty()) {
+                return;
+            }
+            var topicsResult = admin.deleteTopics(topicsToDelete);
             Awaitility.await()
                     .atMost(Duration.ofSeconds(WAIT_TIMEOUT))
                     .pollInterval(Duration.ofSeconds(2))
                     .untilAsserted(() -> topicsResult.all().get(1, TimeUnit.SECONDS));
-            adminClientTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: {} (should be empty)", adminClientTopics);
-            assertThat(adminClientTopics)
-                    .isEmpty();
+            var topicsAfterDelete = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: {}", topicsAfterDelete);
+            assertThat(topicsAfterDelete.stream().noneMatch(topicsToDelete::contains))
+                    .isTrue();
             var actual = execInContainerKafkaTopicsListCommand();
-            assertThat(topics.stream().noneMatch(actual::contains))
+            assertThat(topicsToDelete.stream().noneMatch(actual::contains))
                     .isTrue();
         } catch (ExecutionException | TimeoutException ex) {
             throw new KafkaStartingException("Error when topic deleting, ", ex);

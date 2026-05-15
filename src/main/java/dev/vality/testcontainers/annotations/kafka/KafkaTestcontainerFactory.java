@@ -44,16 +44,8 @@ public class KafkaTestcontainerFactory {
 
     private KafkaContainerExtension create(Provider provider, List<String> topics) {
         return switch (provider) {
-            case APACHE -> {
-                try (var container = new ApacheKafkaContainer(topics)) {
-                    yield container;
-                }
-            }
-            case CONFLUENT -> {
-                try (var container = new ConfluentKafkaContainer(topics)) {
-                    yield container;
-                }
-            }
+            case APACHE -> new ApacheKafkaContainer(topics);
+            case CONFLUENT -> new ConfluentKafkaContainer(topics);
         };
     }
 
