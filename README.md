@@ -35,15 +35,14 @@ opensearchproject/opensearch
 ## Embedded режим без Docker
 
 Для легковесных интеграционных тестов можно использовать embedded-аннотации. Библиотека сама запускает локальный
-backend,
-инициализирует runtime-настройки в Spring context и очищает данные между test methods.
+backend, инициализирует runtime-настройки в Spring context и очищает данные между test methods.
 
 | embedded                | backend                         |
 |-------------------------|---------------------------------|
 | @EmbeddedPostgresqlTest | io.zonky.test embedded-postgres |
 | @EmbeddedKafkaTest      | spring-kafka-test EmbeddedKafka |
 
-Пример замены Docker Kafka/PostgreSQL на embedded:
+Пример:
 
 ```java
 @EmbeddedPostgresqlTest

@@ -47,7 +47,7 @@ public class EmbeddedKafkaTestExtension implements BeforeEachCallback {
             if (!missingTopics.isEmpty()) {
                 embeddedKafkaBroker.addTopics(missingTopics.toArray(String[]::new));
             }
-            var recordsToDelete = recordsToDelete(embeddedKafkaBroker, topics, annotation.partitions());
+            var recordsToDelete = recordsToDelete(embeddedKafkaBroker, topics);
             if (!recordsToDelete.isEmpty()) {
                 adminClient.deleteRecords(recordsToDelete).all().get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             }
@@ -56,11 +56,10 @@ public class EmbeddedKafkaTestExtension implements BeforeEachCallback {
 
     private Map<TopicPartition, RecordsToDelete> recordsToDelete(
             EmbeddedKafkaBroker embeddedKafkaBroker,
-            List<String> topics,
-            int partitions) {
+            List<String> topics) {
         try (var consumer = new KafkaConsumer<byte[], byte[]>(consumerProperties(embeddedKafkaBroker))) {
             var topicPartitions = topics.stream()
-                    .flatMap(topic -> topicPartitions(topic, partitions).stream())
+                    .flatMap(topic -> topicPartitions(topic, embeddedKafkaBroker.getPartitionsPerTopic()).stream())
                     .toList();
             consumer.assign(topicPartitions);
             var endOffsets = consumer.endOffsets(topicPartitions);

@@ -1,7 +1,10 @@
 package dev.vality.testcontainers.annotations.kafka;
 
 import dev.vality.testcontainers.annotations.KafkaTestConfig;
+import dev.vality.testcontainers.annotations.kafka.config.KafkaConsumer;
+import dev.vality.testcontainers.annotations.kafka.config.KafkaProducer;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
@@ -12,7 +15,50 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Starts Spring embedded Kafka and initializes common Spring/Kafka bootstrap properties.
+ * Аннотация {@code @EmbeddedKafkaTest} подключает и запускает embedded Kafka
+ * {@link org.springframework.kafka.test.EmbeddedKafkaBroker}, также
+ * настройки embedded брокера будут проинициализированы в контекст тестового приложения
+ * <p>Аннотация требует дополнительной конфигурации {@link EmbeddedKafkaTest#topics()}
+ * <p><h3>Примеры</h3>
+ * <p>В примере ниже создается обертка над аннотацией для конкретного приложения с инициализацией
+ * конкретных топиков приложения. Эту обертку можно позже переиспользовать для любых тестов,
+ * требующих embedded Kafka без запуска Docker контейнера
+ * <pre> {@code
+ * @Target({ElementType.TYPE})
+ * @Retention(RetentionPolicy.RUNTIME)
+ * @EmbeddedKafkaTest(
+ *         properties = {
+ *                 "kafka.topics.invoicing.consume.enabled=true",
+ *                 "kafka.topics.invoice-template.consume.enabled=true",
+ *                 "kafka.state.cache.size=0"},
+ *         topics = {
+ *                 "magista-invoicing-test",
+ *                 "magista-invoice-template-test"})
+ * public @interface CustomEmbeddedKafkaTest {
+ * }}</pre>
+ * <p>В примере ниже {@link EmbeddedKafkaTest} подключается напрямую
+ * к {@link SpringBootTest} для проведения теста консьюмера, который читает данные из топика
+ * <pre> {@code
+ * @EmbeddedKafkaTest(
+ *         properties = {
+ *                 "kafka.topics.invoicing.id=reporter-invoicing-test",
+ *                 "kafka.topics.invoicing.enabled=true"},
+ *         topics = "reporter-invoicing-test")
+ * @SpringBootTest
+ * public class KafkaListenerTest {
+ *
+ *     @Autowired
+ *     private KafkaProducer<TBase<?, ?>> testThriftKafkaProducer;
+ *
+ *   ...
+ * }}</pre>
+ *
+ * @see KafkaTestcontainer @KafkaTestcontainer
+ * @see KafkaTestcontainerSingleton @KafkaTestcontainerSingleton
+ * @see EmbeddedKafka @EmbeddedKafka
+ * @see KafkaProducer KafkaProducer
+ * @see KafkaConsumer KafkaConsumer
+ * @see KafkaTestConfig KafkaTestConfig
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -23,47 +69,32 @@ import java.lang.annotation.Target;
 public @interface EmbeddedKafkaTest {
 
     /**
-     * Alias for {@link EmbeddedKafka#topics()}.
+     * Аналогичный параметр как у аннотации {@link SpringBootTest#properties()}
+     * <p>
+     * пример — properties = {"kafka.topics.invoicing.consume.enabled=true",...}
+     */
+    String[] properties() default {};
+
+    /**
+     * Обязательный параметр — здесь перечисляются имена топиков, которые требуется создать при старте embedded Kafka
+     * <p>
+     * пример — topics = {"magista-invoicing-test",...}
      */
     @AliasFor(annotation = EmbeddedKafka.class, attribute = "topics")
     String[] topics() default {};
 
     /**
-     * Alias for {@link EmbeddedKafka#partitions()}.
-     */
-    @AliasFor(annotation = EmbeddedKafka.class, attribute = "partitions")
-    int partitions() default 1;
-
-    /**
-     * Alias for {@link EmbeddedKafka#count()}.
-     */
-    @AliasFor(annotation = EmbeddedKafka.class, attribute = "count")
-    int count() default 1;
-
-    /**
-     * Alias for {@link EmbeddedKafka#brokerProperties()}.
-     */
-    @AliasFor(annotation = EmbeddedKafka.class, attribute = "brokerProperties")
-    String[] brokerProperties() default {};
-
-    /**
-     * Alias for {@link EmbeddedKafka#kraft()}.
-     */
-    @AliasFor(annotation = EmbeddedKafka.class, attribute = "kraft")
-    boolean kraft() default false;
-
-    /**
-     * Аналогичный параметр как у аннотации {@code SpringBootTest#properties()}.
-     */
-    String[] properties() default {};
-
-    /**
-     * Удалять и пересоздавать объявленные топики перед каждым тестом.
+     * Очищать топики между тестами
+     *
+     * @return true - данные между тестами удаляются из embedded Kafka
      */
     boolean cleanupTopics() default true;
 
     /**
      * Топики, которые не нужно очищать между тестами.
+     * Используется только если {@link #cleanupTopics()} = true
+     * <p>
+     * пример — excludeCleanupTopics = {"magista-invoicing-test"}
      */
     String[] excludeCleanupTopics() default {};
 }
