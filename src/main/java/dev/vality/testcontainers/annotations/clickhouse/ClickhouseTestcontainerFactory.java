@@ -5,8 +5,6 @@ import lombok.NoArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Arrays;
-
 /**
  * Фабрика по созданию контейнеров
  * <p>{@link #create(String, String[])} создает экземпляр тестконтейнера
@@ -19,8 +17,6 @@ import java.util.Arrays;
 public class ClickhouseTestcontainerFactory {
 
     private ClickhouseContainerExtension clickHouseContainer;
-    private String singletonDatabaseName;
-    private String[] singletonMigrations;
 
     public static ClickhouseContainerExtension container(String databaseName, String[] migrations) {
         return instance().create(databaseName, migrations);
@@ -37,30 +33,15 @@ public class ClickhouseTestcontainerFactory {
     @Synchronized
     private ClickhouseContainerExtension getOrCreateSingletonContainer(String databaseName, String[] migrations) {
         if (clickHouseContainer != null) {
-            validateSingletonConfig(databaseName, migrations);
             return clickHouseContainer;
         }
         clickHouseContainer = create(databaseName, migrations);
-        singletonDatabaseName = databaseName;
-        singletonMigrations = Arrays.copyOf(migrations, migrations.length);
         return clickHouseContainer;
     }
 
     private ClickhouseContainerExtension create(String databaseName, String[] migrations) {
-        return new ClickhouseContainerExtension(databaseName, migrations);
-    }
-
-    private void validateSingletonConfig(String databaseName, String[] migrations) {
-        if (!singletonDatabaseName.equals(databaseName) || !Arrays.equals(singletonMigrations, migrations)) {
-            throw new IllegalStateException(
-                    ("ClickHouse singleton testcontainer was already created with databaseName=%s migrations=%s, "
-                            + "but requested databaseName=%s migrations=%s. Use the same singleton ClickHouse "
-                            + "configuration across test classes or switch to non-singleton @ClickhouseTestcontainer.")
-                            .formatted(
-                                    singletonDatabaseName,
-                                    Arrays.toString(singletonMigrations),
-                                    databaseName,
-                                    Arrays.toString(migrations)));
+        try (var container = new ClickhouseContainerExtension(databaseName, migrations)) {
+            return container;
         }
     }
 
