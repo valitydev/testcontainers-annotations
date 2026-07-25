@@ -71,8 +71,7 @@ public class PostgresqlDatabaseCleaner {
 
     private static Set<String> getSchemas(Connection connection) throws SQLException {
         var schemas = new LinkedHashSet<String>();
-        try (var statement = connection.createStatement();
-             var resultSet = statement.executeQuery(SCHEMAS_QUERY)) {
+        try (var statement = connection.createStatement(); var resultSet = statement.executeQuery(SCHEMAS_QUERY)) {
             while (resultSet.next()) {
                 var schema = resultSet.getString("schema_name");
                 if (!EXCLUDED_SCHEMAS.contains(schema)
