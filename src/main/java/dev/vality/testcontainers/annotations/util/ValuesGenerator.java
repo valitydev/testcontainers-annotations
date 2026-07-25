@@ -8,77 +8,89 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ValuesGenerator {
 
-    private static final LocalDateTime fromTime = LocalDateTime.now().minusHours(3);
-    private static final LocalDateTime toTime = LocalDateTime.now().minusHours(1);
-    private static final LocalDateTime inFromToPeriodTime = LocalDateTime.now().minusHours(2);
+    private static final AtomicLong SEED_SEQUENCE = new AtomicLong(RandomBeans.DEFAULT_SEED);
+    private static volatile Clock clock = Clock.systemDefaultZone();
 
     public static String generateId() {
         return UUID.randomUUID().toString();
     }
 
     public static String generateDate() {
-        return TypeUtil.temporalToString(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        return TypeUtil.temporalToString(LocalDateTime.now(clock).truncatedTo(ChronoUnit.MICROS));
     }
 
     public static Long generateLong() {
-        return RandomBeans.random(Long.class);
+        return RandomBeans.random(SEED_SEQUENCE.getAndIncrement(), Long.class);
     }
 
     public static Integer generateInt() {
-        return RandomBeans.random(Integer.class);
+        return RandomBeans.random(SEED_SEQUENCE.getAndIncrement(), Integer.class);
     }
 
     public static String generateString() {
-        return RandomBeans.random(String.class);
+        return RandomBeans.random(SEED_SEQUENCE.getAndIncrement(), String.class);
     }
 
     public static LocalDateTime generateLocalDateTime() {
-        return RandomBeans.random(LocalDateTime.class).truncatedTo(ChronoUnit.MICROS);
+        return RandomBeans.random(SEED_SEQUENCE.getAndIncrement(), LocalDateTime.class)
+                .truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant generateInstant() {
-        return RandomBeans.random(Instant.class).truncatedTo(ChronoUnit.MICROS);
+        return RandomBeans.random(SEED_SEQUENCE.getAndIncrement(), Instant.class)
+                .truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant generateCurrentTimePlusDay() {
-        return LocalDateTime.now().plusDays(1).toInstant(getZoneOffset()).truncatedTo(ChronoUnit.MICROS);
+        return ZonedDateTime.now(clock).plusDays(1).toInstant().truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant generateCurrentTimePlusSecond() {
-        return LocalDateTime.now().plusSeconds(1).toInstant(getZoneOffset()).truncatedTo(ChronoUnit.MICROS);
+        return ZonedDateTime.now(clock).plusSeconds(1).toInstant().truncatedTo(ChronoUnit.MICROS);
     }
 
     public static ZoneOffset getZoneOffset() {
-        return ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now());
+        return ZonedDateTime.now(clock).getOffset();
     }
 
     public static String getContent(InputStream content) throws IOException {
-        return IOUtils.toString(content, StandardCharsets.UTF_8);
+        try (content) {
+            return IOUtils.toString(content, StandardCharsets.UTF_8);
+        }
     }
 
     public static LocalDateTime getFromTime() {
-        return fromTime.truncatedTo(ChronoUnit.MICROS);
+        return LocalDateTime.now(clock).minusHours(3).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getToTime() {
-        return toTime.truncatedTo(ChronoUnit.MICROS);
+        return LocalDateTime.now(clock).minusHours(1).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static LocalDateTime getInFromToPeriodTime() {
-        return inFromToPeriodTime.truncatedTo(ChronoUnit.MICROS);
+        return LocalDateTime.now(clock).minusHours(2).truncatedTo(ChronoUnit.MICROS);
     }
 
     public static Instant getCurrentInstant() {
-        return Instant.now().truncatedTo(ChronoUnit.MICROS);
+        return Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+    }
+
+    public static void useClock(Clock customClock) {
+        if (customClock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
+        clock = customClock;
+    }
+
+    public static void resetClock() {
+        clock = Clock.systemDefaultZone();
     }
 }

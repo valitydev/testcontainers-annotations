@@ -1,49 +1,60 @@
 package dev.vality.testcontainers.annotations.postgresql;
 
+import dev.vality.testcontainers.annotations.util.ContainerShutdownRegistry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.Synchronized;
 
 /**
- * Фабрика по созданию контейнеров
- * <p>{@link #create()} создает экземпляр тестконтейнера
- * <p>{@link #getOrCreateSingletonContainer()} создает синглтон тестконтейнера
- *
- * @see PostgresqlTestcontainerExtension PostgresqlTestcontainerExtension
+ * Фабрика по созданию PostgreSQL контейнеров.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PostgresqlTestcontainerFactory {
 
-    private PostgresqlContainerExtension postgresqlContainer;
+    private volatile PostgresqlContainerExtension singletonContainer;
 
     public static PostgresqlContainerExtension container() {
-        return instance().create();
+        return new PostgresqlContainerExtension();
     }
 
     public static PostgresqlContainerExtension singletonContainer() {
         return instance().getOrCreateSingletonContainer();
     }
 
+    static void discardSingleton(PostgresqlContainerExtension container) {
+        instance().discard(container);
+    }
+
     private static PostgresqlTestcontainerFactory instance() {
         return SingletonHolder.INSTANCE;
     }
 
-    @Synchronized
-    private PostgresqlContainerExtension getOrCreateSingletonContainer() {
-        if (postgresqlContainer != null) {
-            return postgresqlContainer;
+    private void discard(PostgresqlContainerExtension container) {
+        synchronized (this) {
+            if (singletonContainer != container) {
+                return;
+            }
+            singletonContainer = null;
         }
-        postgresqlContainer = create();
-        return postgresqlContainer;
+        ContainerShutdownRegistry.unregister(container);
+        container.stop();
     }
 
-    private PostgresqlContainerExtension create() {
-        return new PostgresqlContainerExtension();
+    private PostgresqlContainerExtension getOrCreateSingletonContainer() {
+        var result = singletonContainer;
+        if (result == null) {
+            synchronized (this) {
+                result = singletonContainer;
+                if (result == null) {
+                    result = ContainerShutdownRegistry.register(new PostgresqlContainerExtension());
+                    singletonContainer = result;
+                }
+            }
+        }
+        return result;
     }
 
     private static class SingletonHolder {
 
         private static final PostgresqlTestcontainerFactory INSTANCE = new PostgresqlTestcontainerFactory();
-
     }
 }

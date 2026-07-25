@@ -1,9 +1,11 @@
 package dev.vality.testcontainers.annotations.minio;
 
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
-import lombok.extern.slf4j.Slf4j;
+import dev.vality.testcontainers.annotations.util.SharedTestResourceLock;
+import dev.vality.testcontainers.annotations.util.TestExecutionLock;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -11,79 +13,158 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
+import org.springframework.test.context.MergedContextConfiguration;
 import org.testcontainers.containers.GenericContainer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
-/**
- * {@code @MinioTestcontainerExtension} инициализирует тестконтейнер из {@link MinioTestcontainerFactory},
- * настраивает, стартует, валидирует и останавливает
- * <p><h3>{@link MinioTestcontainerExtension.MinioTestcontainerContextCustomizerFactory}</h3>
- * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
- * под капотом аннотаций, на уровне реализации интерфейса  —
- * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
- * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
- * приложения {@link ConfigurableApplicationContext}
- * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
- * в файле META-INF/spring.factories
- *
- * @see MinioTestcontainerFactory MinioTestcontainerFactory
- * @see MinioTestcontainerExtension.MinioTestcontainerContextCustomizerFactory MinioTestcontainerContextCustomizerFactory
- * @see TestPropertyValues TestPropertyValues
- * @see ConfigurableApplicationContext ConfigurableApplicationContext
- * @see BeforeAllCallback BeforeAllCallback
- * @see AfterAllCallback AfterAllCallback
- */
-@Slf4j
-public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllCallback {
+public class MinioTestcontainerExtension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback {
 
-    private static final ThreadLocal<GenericContainer<?>> THREAD_CONTAINER = new ThreadLocal<>();
+    private static final ConcurrentMap<Class<?>, ContainerReference> CONTAINERS = new ConcurrentHashMap<>();
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        if (findPrototypeAnnotation(context).isPresent()) {
-            var container = MinioTestcontainerFactory.container();
-            GenericContainerUtil.startContainer(container);
-            THREAD_CONTAINER.set(container);
-        } else if (findSingletonAnnotation(context).isPresent()) {
-            var container = MinioTestcontainerFactory.singletonContainer();
-            if (!container.isRunning()) {
-                GenericContainerUtil.startContainer(container);
+        var testClass = context.getRequiredTestClass();
+        getOrStart(testClass, configuration(testClass));
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        var testClass = context.getRequiredTestClass();
+        var configuration = configuration(testClass);
+        if (configuration.cleanupBucket()) {
+            TestExecutionLock.acquire(context);
+            try {
+                var reference = getOrStart(testClass, configuration);
+                MinioBucketManager.cleanupBucket(
+                        reference.container(),
+                        configuration.bucketName(),
+                        configuration.excludedPrefixes());
+            } catch (RuntimeException ex) {
+                TestExecutionLock.release(context);
+                throw ex;
             }
-            THREAD_CONTAINER.set(container);
         }
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findPrototypeAnnotation(context).isPresent()) {
-            var container = THREAD_CONTAINER.get();
-            if (container != null && container.isRunning()) {
-                container.stop();
+        var testClass = context.getRequiredTestClass();
+        var reference = CONTAINERS.remove(testClass);
+        try {
+            if (reference != null && !reference.singleton()) {
+                reference.container().stop();
             }
-            THREAD_CONTAINER.remove();
-        } else if (findSingletonAnnotation(context).isPresent()) {
-            THREAD_CONTAINER.remove();
+        } finally {
+            if (reference != null && reference.singleton()) {
+                SharedTestResourceLock.release(testClass);
+            }
         }
     }
 
-    private static Optional<MinioTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getTestClass(), MinioTestcontainer.class);
+    private static ContainerReference getOrStart(Class<?> testClass, Configuration configuration) {
+        return CONTAINERS.computeIfAbsent(testClass, ignored -> createAndStart(testClass, configuration));
+    }
+
+    private static ContainerReference createAndStart(Class<?> testClass, Configuration configuration) {
+        if (configuration.singleton()) {
+            SharedTestResourceLock.acquire(testClass);
+        }
+        try {
+            var container = configuration.singleton()
+                    ? MinioTestcontainerFactory.singletonContainer()
+                    : MinioTestcontainerFactory.container();
+            try {
+                GenericContainerUtil.startContainer(container);
+                MinioBucketManager.ensureBucket(container, configuration.bucketName());
+                if (configuration.singleton() && configuration.cleanupBucket()) {
+                    MinioBucketManager.cleanupBucket(
+                            container,
+                            configuration.bucketName(),
+                            configuration.excludedPrefixes());
+                }
+                return new ContainerReference(container, configuration.singleton());
+            } catch (RuntimeException ex) {
+                try {
+                    if (configuration.singleton()) {
+                        MinioTestcontainerFactory.discardSingleton(container);
+                    } else {
+                        container.stop();
+                    }
+                } catch (RuntimeException stopException) {
+                    ex.addSuppressed(stopException);
+                }
+                throw ex;
+            }
+        } catch (RuntimeException ex) {
+            if (configuration.singleton()) {
+                SharedTestResourceLock.release(testClass);
+            }
+            throw ex;
+        }
+    }
+
+    private static Configuration configuration(Class<?> testClass) {
+        var prototype = findPrototypeAnnotation(testClass);
+        if (prototype.isPresent()) {
+            var annotation = prototype.get();
+            return new Configuration(
+                    false,
+                    annotation.bucketName(),
+                    annotation.cleanupBucket(),
+                    List.copyOf(Arrays.asList(annotation.excludeCleanupPrefixes())),
+                    List.copyOf(Arrays.asList(annotation.properties())));
+        }
+        var annotation = findSingletonAnnotation(testClass)
+                .orElseThrow(() -> new IllegalStateException("MinIO test annotation not found"));
+        return new Configuration(
+                true,
+                annotation.bucketName(),
+                annotation.cleanupBucket(),
+                List.copyOf(Arrays.asList(annotation.excludeCleanupPrefixes())),
+                List.copyOf(Arrays.asList(annotation.properties())));
     }
 
     private static Optional<MinioTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, MinioTestcontainer.class);
     }
 
-    private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getTestClass(), MinioTestcontainerSingleton.class);
-    }
-
     private static Optional<MinioTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, MinioTestcontainerSingleton.class);
+    }
+
+    private static final class ContainerReference {
+
+        private final GenericContainer<?> container;
+        private final boolean singleton;
+
+        private ContainerReference(GenericContainer<?> container, boolean singleton) {
+            this.container = container;
+            this.singleton = singleton;
+        }
+
+        private GenericContainer<?> container() {
+            return container;
+        }
+
+        private boolean singleton() {
+            return singleton;
+        }
+
+    }
+
+    private record Configuration(
+            boolean singleton,
+            String bucketName,
+            boolean cleanupBucket,
+            List<String> excludedPrefixes,
+            List<String> properties) {
     }
 
     public static class MinioTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -92,55 +173,41 @@ public class MinioTestcontainerExtension implements BeforeAllCallback, AfterAllC
         public ContextCustomizer createContextCustomizer(
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
-            return (context, mergedConfig) -> {
-                if (findPrototypeAnnotation(testClass).isPresent()) {
-                    var annotation = findPrototypeAnnotation(testClass).get();
-                    init(
-                            context,
-                            annotation.bucketName(),
-                            annotation.properties());
-                } else {
-                    findSingletonAnnotation(testClass).ifPresent(
-                            annotation -> init(
-                                    context,
-                                    annotation.bucketName(),
-                                    annotation.properties()));
-                }
-            };
+            if (findPrototypeAnnotation(testClass).isEmpty() && findSingletonAnnotation(testClass).isEmpty()) {
+                return null;
+            }
+            return new MinioContextCustomizer(testClass, configuration(testClass));
         }
+    }
 
-        private void init(
+    private record MinioContextCustomizer(
+            Class<?> testClass,
+            Configuration configuration) implements ContextCustomizer {
+
+        @Override
+        public void customizeContext(
                 ConfigurableApplicationContext context,
-                String bucketName,
-                String[] properties) {
-            var container = THREAD_CONTAINER.get();
+                MergedContextConfiguration mergedConfig) {
+            var container = getOrStart(testClass, configuration).container();
+            var hostAndPort = container.getHost() + ":" + container.getMappedPort(9000);
+            var endpoint = "http://" + hostAndPort + "/";
+            var user = loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER);
+            var password = loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD);
             TestPropertyValues.of(
-                            // deprecated
-                            "storage.endpoint=" + container.getHost() + ":" +
-                                    container.getMappedPort(9000),
-//                    "storage.signingRegion=" + signingRegion,
-                            "storage.accessKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                            "storage.secretKey=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
-//                    "storage.clientProtocol=" + clientProtocol,
-//                    "storage.clientMaxErrorRetry=" + clientMaxErrorRetry,
-                            "storage.bucketName=" + bucketName,
-                            // --
-                            "s3.endpoint=" + container.getHost() + ":" + container.getMappedPort(9000),
-                            "s3.bucket-name=" + bucketName,
-//                    "s3.signing-region=" + signingRegion,
-//                    "s3.client-protocol=" + clientProtocol,
-//                    "s3.client-max-error-retry=" + clientMaxErrorRetry,
-//                    "s3.signer-override=" + signerOverride,
-                            "s3.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                            "s3.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD),
+                            "storage.endpoint=" + hostAndPort,
+                            "storage.accessKey=" + user,
+                            "storage.secretKey=" + password,
+                            "storage.bucketName=" + configuration.bucketName(),
+                            "s3.endpoint=" + hostAndPort,
+                            "s3.bucket-name=" + configuration.bucketName(),
+                            "s3.access-key=" + user,
+                            "s3.secret-key=" + password,
                             "s3-sdk-v2.enabled=false",
-                            "s3-sdk-v2.endpoint=" + String.format("http://%s:%d/", container.getHost(),
-                                    container.getMappedPort(9000)),
-                            "s3-sdk-v2.bucket-name=" + bucketName,
-//                    "s3-sdk-v2.region=" + signingRegion,
-                            "s3-sdk-v2.access-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_USER),
-                            "s3-sdk-v2.secret-key=" + loadDefaultLibraryProperty(MinioTestcontainerFactory.MINIO_PASSWORD))
-                    .and(properties)
+                            "s3-sdk-v2.endpoint=" + endpoint,
+                            "s3-sdk-v2.bucket-name=" + configuration.bucketName(),
+                            "s3-sdk-v2.access-key=" + user,
+                            "s3-sdk-v2.secret-key=" + password)
+                    .and(configuration.properties().toArray(String[]::new))
                     .applyTo(context);
         }
     }

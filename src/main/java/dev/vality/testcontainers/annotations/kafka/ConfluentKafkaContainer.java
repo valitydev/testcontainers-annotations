@@ -1,11 +1,9 @@
 package dev.vality.testcontainers.annotations.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.Network;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
-import java.util.UUID;
 
 import static dev.vality.testcontainers.annotations.util.SpringApplicationPropertiesLoader.loadDefaultLibraryProperty;
 
@@ -30,8 +28,6 @@ public class ConfluentKafkaContainer extends org.testcontainers.kafka.ConfluentK
         withEnv("KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE", "false");
         withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false");
         withEnv("KAFKA_CFG_NODE_ID", "1");
-        withNetworkAliases("kafka-" + UUID.randomUUID());
-        withNetwork(Network.SHARED);
     }
 
     @Override

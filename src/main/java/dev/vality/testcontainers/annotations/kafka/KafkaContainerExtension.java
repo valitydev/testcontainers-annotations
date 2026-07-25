@@ -12,14 +12,13 @@ import org.testcontainers.lifecycle.Startable;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public interface KafkaContainerExtension extends Startable, ContainerState {
 
@@ -34,76 +33,79 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
     String execInContainerKafkaTopicsListCommand();
 
     default void createTopics(List<String> excludedTopics) {
+        var topicsToEnsure = topics().stream()
+                .filter(topic -> !excludedTopics.contains(topic))
+                .toList();
+        if (topicsToEnsure.isEmpty()) {
+            return;
+        }
+
         try (var admin = createAdminClient()) {
-            var topics = topics().stream()
-                    .filter(topic -> !excludedTopics.contains(topic))
-                    .toList();
-            if (topics.isEmpty()) {
-                return;
-            }
             var existingTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            var topicsToCreate = topics.stream()
+            var topicsToCreate = topicsToEnsure.stream()
                     .filter(topic -> !existingTopics.contains(topic))
                     .toList();
-            if (topicsToCreate.isEmpty()) {
-                return;
+            if (!topicsToCreate.isEmpty()) {
+                var newTopics = topicsToCreate.stream()
+                        .map(topic -> new NewTopic(topic, 1, (short) 1))
+                        .toList();
+                admin.createTopics(newTopics).all().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
             }
-            var newTopics = topicsToCreate.stream()
-                    .map(topic -> new NewTopic(topic, 1, (short) 1))
-                    .peek(newTopic -> log.info(newTopic.toString()))
-                    .collect(Collectors.toList());
-            var topicsResult = admin.createTopics(newTopics);
+
             Awaitility.await()
                     .atMost(Duration.ofSeconds(WAIT_TIMEOUT))
-                    .pollInterval(Duration.ofSeconds(2))
-                    .untilAsserted(() -> topicsResult.all().get(1, TimeUnit.SECONDS));
-            var topicsAfterCreate = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS CREATED]: {}", topicsAfterCreate);
-            assertThat(topicsAfterCreate)
-                    .containsAll(topicsToCreate);
-            var actual = execInContainerKafkaTopicsListCommand();
-            assertThat(topicsToCreate.stream().allMatch(actual::contains))
-                    .isTrue();
+                    .pollInterval(Duration.ofSeconds(1))
+                    .until(() -> {
+                        var actual = admin.listTopics().names().get(5, TimeUnit.SECONDS);
+                        return actual.containsAll(topicsToEnsure);
+                    });
+
+            var actual = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            if (!actual.containsAll(topicsToEnsure)) {
+                throw new KafkaStartingException(
+                        "Kafka topics were not created. Expected=" + topicsToEnsure + ", actual=" + actual,
+                        null);
+            }
+            log.info("Kafka topics are ready: {}", topicsToEnsure);
         } catch (ExecutionException | TimeoutException ex) {
-            throw new KafkaStartingException("Error when topic creating, ", ex);
+            throw new KafkaStartingException("Error while creating Kafka topics", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when topic creating, ", ex);
+            throw new KafkaStartingException("Interrupted while creating Kafka topics", ex);
         }
     }
 
     default void deleteTopics(List<String> excludedTopics) {
         try (var admin = createAdminClient()) {
             var existingTopics = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            if (existingTopics.isEmpty()) {
-                return;
-            }
-            var topics = topics().stream()
+            var topicsToDelete = topics().stream()
                     .filter(topic -> !excludedTopics.contains(topic))
-                    .toList();
-            var topicsToDelete = topics.stream()
                     .filter(existingTopics::contains)
                     .toList();
             if (topicsToDelete.isEmpty()) {
                 return;
             }
-            var topicsResult = admin.deleteTopics(topicsToDelete);
+
+            admin.deleteTopics(topicsToDelete).all().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
             Awaitility.await()
                     .atMost(Duration.ofSeconds(WAIT_TIMEOUT))
-                    .pollInterval(Duration.ofSeconds(2))
-                    .untilAsserted(() -> topicsResult.all().get(1, TimeUnit.SECONDS));
-            var topicsAfterDelete = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
-            log.info("Topics list from 'AdminClient' after [TOPICS DELETED]: {}", topicsAfterDelete);
-            assertThat(topicsAfterDelete.stream().noneMatch(topicsToDelete::contains))
-                    .isTrue();
-            var actual = execInContainerKafkaTopicsListCommand();
-            assertThat(topicsToDelete.stream().noneMatch(actual::contains))
-                    .isTrue();
+                    .pollInterval(Duration.ofSeconds(1))
+                    .until(() -> {
+                        var actual = admin.listTopics().names().get(5, TimeUnit.SECONDS);
+                        return actual.stream().noneMatch(topicsToDelete::contains);
+                    });
+
+            var actual = admin.listTopics().names().get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+            var remaining = topicsToDelete.stream().filter(actual::contains).toList();
+            if (!remaining.isEmpty()) {
+                throw new KafkaStartingException("Kafka topics were not deleted: " + remaining, null);
+            }
+            log.info("Kafka topics were deleted: {}", topicsToDelete);
         } catch (ExecutionException | TimeoutException ex) {
-            throw new KafkaStartingException("Error when topic deleting, ", ex);
+            throw new KafkaStartingException("Error while deleting Kafka topics", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when topic deleting, ", ex);
+            throw new KafkaStartingException("Interrupted while deleting Kafka topics", ex);
         }
     }
 
@@ -114,16 +116,29 @@ public interface KafkaContainerExtension extends Startable, ContainerState {
     }
 
     default String execInContainerKafkaTopicsListCommandWithPath(String kafkaTopicsPath) {
-        var kafkaTopicsListCommand = kafkaTopicsPath + " --bootstrap-server localhost:9093 --list";
+        var command = kafkaTopicsPath + " --bootstrap-server localhost:9093 --list";
         try {
-            var stdout = execInContainer("/bin/bash", "-c", kafkaTopicsListCommand).getStdout();
-            log.info("Topics list from '{}': [{}]", kafkaTopicsPath, stdout.replace("\n", ","));
-            return stdout;
+            var result = execInContainer("/bin/bash", "-c", command);
+            if (result.getExitCode() != 0) {
+                throw new KafkaStartingException(
+                        "Kafka topics command failed with exit code " + result.getExitCode() +
+                                ": " + result.getStderr(),
+                        null);
+            }
+            log.info("Topics list from '{}': {}", kafkaTopicsPath, result.getStdout().replace("\n", ","));
+            return result.getStdout();
         } catch (IOException ex) {
-            throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
+            throw new KafkaStartingException("Error while executing " + command, ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            throw new KafkaStartingException("Error when " + kafkaTopicsListCommand + ", ", ex);
+            throw new KafkaStartingException("Interrupted while executing " + command, ex);
         }
+    }
+
+    default Set<String> parseTopicList(String stdout) {
+        return Arrays.stream(stdout.split("\\R"))
+                .map(String::trim)
+                .filter(topic -> !topic.isEmpty())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 }

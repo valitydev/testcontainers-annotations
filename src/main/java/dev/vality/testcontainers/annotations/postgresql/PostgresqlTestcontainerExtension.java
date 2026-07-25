@@ -1,7 +1,8 @@
 package dev.vality.testcontainers.annotations.postgresql;
 
 import dev.vality.testcontainers.annotations.util.GenericContainerUtil;
-import lombok.extern.slf4j.Slf4j;
+import dev.vality.testcontainers.annotations.util.SharedTestResourceLock;
+import dev.vality.testcontainers.annotations.util.TestExecutionLock;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -12,104 +13,147 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
+import org.springframework.test.context.MergedContextConfiguration;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-/**
- * {@code @PostgresqlTestcontainerExtension} инициализирует тестконтейнер из {@link PostgresqlTestcontainerFactory},
- * настраивает, стартует, валидирует и останавливает
- * <p><h3>{@link PostgresqlTestcontainerContextCustomizerFactory}</h3>
- * <p>Инициализация настроек контейнеров в спринговый контекст тестового приложения реализован
- * под капотом аннотаций, на уровне реализации интерфейса  —
- * информация о настройках используемого тестконтейнера и передаваемые через параметры аннотации настройки
- * инициализируются через {@link TestPropertyValues} и сливаются с текущим получаемым контекстом
- * приложения {@link ConfigurableApplicationContext}
- * <p>Инициализация кастомизированных фабрик с инициализацией настроек осуществляется через описание бинов
- * в файле META-INF/spring.factories
- *
- * @see PostgresqlTestcontainerFactory PostgresqlTestcontainerFactory
- * @see PostgresqlTestcontainerContextCustomizerFactory PostgresqlTestcontainerContextCustomizerFactory
- * @see TestPropertyValues TestPropertyValues
- * @see ConfigurableApplicationContext ConfigurableApplicationContext
- * @see BeforeAllCallback BeforeAllCallback
- * @see AfterAllCallback AfterAllCallback
- */
-@Slf4j
 public class PostgresqlTestcontainerExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
 
-    private static final ThreadLocal<PostgresqlContainerExtension> THREAD_CONTAINER = new ThreadLocal<>();
+    private static final ConcurrentMap<Class<?>, ContainerReference> CONTAINERS = new ConcurrentHashMap<>();
 
     @Override
     public void beforeAll(ExtensionContext context) {
-        if (findPrototypeAnnotation(context).isPresent()) {
-            var container = PostgresqlTestcontainerFactory.container();
-            GenericContainerUtil.startContainer(container);
-            THREAD_CONTAINER.set(container);
-        } else if (findSingletonAnnotation(context).isPresent()) {
-            var container = PostgresqlTestcontainerFactory.singletonContainer();
-            if (!container.isRunning()) {
-                GenericContainerUtil.startContainer(container);
-            } else if (findSingletonAnnotation(context).get().truncateTables()) {
-                var excludedTables = Optional.ofNullable(findSingletonAnnotation(context).get().excludeTruncateTables())
-                        .map(List::of)
-                        .orElse(List.of());
-                container.cleanupDatabaseTables(excludedTables);
-            }
-
-            THREAD_CONTAINER.set(container);
-        }
+        getOrStart(context.getRequiredTestClass());
     }
 
     @Override
     public void beforeEach(ExtensionContext context) {
-        var container = THREAD_CONTAINER.get();
-        if (findPrototypeAnnotation(context).isPresent()) {
-            var annotation = findPrototypeAnnotation(context).get();
-            if (container != null && container.isRunning() && annotation.truncateTables()) {
-                var excludedTables = Optional.ofNullable(annotation.excludeTruncateTables())
-                        .map(List::of)
-                        .orElse(List.of());
-                container.cleanupDatabaseTables(excludedTables);
+        var testClass = context.getRequiredTestClass();
+        findCleanupConfiguration(testClass).ifPresent(configuration -> {
+            if (configuration.truncateTables()) {
+                TestExecutionLock.acquire(context);
+                try {
+                    var reference = getOrStart(testClass);
+                    reference.container().cleanupDatabaseTables(configuration.excludedTables());
+                } catch (RuntimeException ex) {
+                    TestExecutionLock.release(context);
+                    throw ex;
+                }
             }
-        } else if (findSingletonAnnotation(context).isPresent()) {
-            var annotation = findSingletonAnnotation(context).get();
-            if (container != null && container.isRunning() && annotation.truncateTables()) {
-                var excludedTables = Optional.ofNullable(annotation.excludeTruncateTables())
-                        .map(List::of)
-                        .orElse(List.of());
-                container.cleanupDatabaseTables(excludedTables);
-            }
-        }
+        });
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (findPrototypeAnnotation(context).isPresent()) {
-            var container = THREAD_CONTAINER.get();
-            if (container != null && container.isRunning()) {
-                container.stop();
+        var testClass = context.getRequiredTestClass();
+        var reference = CONTAINERS.remove(testClass);
+        try {
+            if (reference != null && !reference.singleton()) {
+                reference.container().stop();
             }
-            THREAD_CONTAINER.remove();
-        } else if (findSingletonAnnotation(context).isPresent()) {
-            THREAD_CONTAINER.remove();
+        } finally {
+            if (reference != null && reference.singleton()) {
+                SharedTestResourceLock.release(testClass);
+            }
         }
     }
 
-    private static Optional<PostgresqlTestcontainer> findPrototypeAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getTestClass(), PostgresqlTestcontainer.class);
+    private static ContainerReference getOrStart(Class<?> testClass) {
+        return CONTAINERS.computeIfAbsent(testClass, PostgresqlTestcontainerExtension::createAndStart);
+    }
+
+    private static ContainerReference createAndStart(Class<?> testClass) {
+        var prototype = findPrototypeAnnotation(testClass);
+        var singletonAnnotation = findSingletonAnnotation(testClass);
+        if (prototype.isEmpty() && singletonAnnotation.isEmpty()) {
+            throw new IllegalStateException("PostgreSQL test annotation not found");
+        }
+
+        var singleton = singletonAnnotation.isPresent();
+        if (singleton) {
+            SharedTestResourceLock.acquire(testClass);
+        }
+        try {
+            var container = singleton
+                    ? PostgresqlTestcontainerFactory.singletonContainer()
+                    : PostgresqlTestcontainerFactory.container();
+            try {
+                GenericContainerUtil.startContainer(container);
+                if (singleton) {
+                    findCleanupConfiguration(testClass).ifPresent(configuration -> {
+                        if (configuration.truncateTables()) {
+                            container.cleanupDatabaseTables(configuration.excludedTables());
+                        }
+                    });
+                }
+                return new ContainerReference(container, singleton);
+            } catch (RuntimeException ex) {
+                try {
+                    if (singleton) {
+                        PostgresqlTestcontainerFactory.discardSingleton(container);
+                    } else {
+                        container.stop();
+                    }
+                } catch (RuntimeException stopException) {
+                    ex.addSuppressed(stopException);
+                }
+                throw ex;
+            }
+        } catch (RuntimeException ex) {
+            if (singleton) {
+                SharedTestResourceLock.release(testClass);
+            }
+            throw ex;
+        }
+    }
+
+    private static Optional<CleanupConfiguration> findCleanupConfiguration(Class<?> testClass) {
+        var prototype = findPrototypeAnnotation(testClass);
+        if (prototype.isPresent()) {
+            var annotation = prototype.get();
+            return Optional.of(new CleanupConfiguration(
+                    annotation.truncateTables(),
+                    List.copyOf(Arrays.asList(annotation.excludeTruncateTables()))));
+        }
+        return findSingletonAnnotation(testClass)
+                .map(annotation -> new CleanupConfiguration(
+                        annotation.truncateTables(),
+                        List.copyOf(Arrays.asList(annotation.excludeTruncateTables()))));
     }
 
     private static Optional<PostgresqlTestcontainer> findPrototypeAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainer.class);
     }
 
-    private static Optional<PostgresqlTestcontainerSingleton> findSingletonAnnotation(ExtensionContext context) {
-        return AnnotationSupport.findAnnotation(context.getTestClass(), PostgresqlTestcontainerSingleton.class);
-    }
-
     private static Optional<PostgresqlTestcontainerSingleton> findSingletonAnnotation(Class<?> testClass) {
         return AnnotationSupport.findAnnotation(testClass, PostgresqlTestcontainerSingleton.class);
+    }
+
+    private static final class ContainerReference {
+
+        private final PostgresqlContainerExtension container;
+        private final boolean singleton;
+
+        private ContainerReference(PostgresqlContainerExtension container, boolean singleton) {
+            this.container = container;
+            this.singleton = singleton;
+        }
+
+        private PostgresqlContainerExtension container() {
+            return container;
+        }
+
+        private boolean singleton() {
+            return singleton;
+        }
+
+    }
+
+    private record CleanupConfiguration(boolean truncateTables, List<String> excludedTables) {
     }
 
     public static class PostgresqlTestcontainerContextCustomizerFactory implements ContextCustomizerFactory {
@@ -118,17 +162,34 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
         public ContextCustomizer createContextCustomizer(
                 Class<?> testClass,
                 List<ContextConfigurationAttributes> configAttributes) {
-            return (context, mergedConfig) -> {
-                if (findPrototypeAnnotation(testClass).isPresent()) {
-                    init(context, findPrototypeAnnotation(testClass).get().properties());
-                } else if (findSingletonAnnotation(testClass).isPresent()) {
-                    init(context, findSingletonAnnotation(testClass).get().properties());
-                }
-            };
+            var prototype = findPrototypeAnnotation(testClass);
+            if (prototype.isPresent()) {
+                return new PostgresqlContextCustomizer(
+                        testClass,
+                        false,
+                        List.copyOf(Arrays.asList(prototype.get().properties())));
+            }
+            var singleton = findSingletonAnnotation(testClass);
+            if (singleton.isPresent()) {
+                return new PostgresqlContextCustomizer(
+                        testClass,
+                        true,
+                        List.copyOf(Arrays.asList(singleton.get().properties())));
+            }
+            return null;
         }
+    }
 
-        private void init(ConfigurableApplicationContext context, String[] properties) {
-            var container = THREAD_CONTAINER.get();
+    private record PostgresqlContextCustomizer(
+            Class<?> testClass,
+            boolean singleton,
+            List<String> properties) implements ContextCustomizer {
+
+        @Override
+        public void customizeContext(
+                ConfigurableApplicationContext context,
+                MergedContextConfiguration mergedConfig) {
+            var container = getOrStart(testClass).container();
             var jdbcUrl = container.getJdbcUrl();
             var username = container.getUsername();
             var password = container.getPassword();
@@ -147,7 +208,7 @@ public class PostgresqlTestcontainerExtension implements BeforeAllCallback, Afte
                             "flyway.user=" + username,
                             "flyway.password=" + password,
                             "flyway.postgresql.transactional.lock=false")
-                    .and(properties)
+                    .and(properties.toArray(String[]::new))
                     .applyTo(context);
         }
     }

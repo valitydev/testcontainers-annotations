@@ -142,7 +142,7 @@ public @interface KafkaTestcontainerSingleton {
      * Топики, которые не нужно очищать между тестами.
      * Используется только если {@link #truncateTopics()} = true
      * <p>
-     * пример — excludeTruncateTopics = {"kafka.topics.invoicing.id"}
+     * пример — excludeTruncateTopics = {"invoicing"} (реальное имя топика, не ключ property)
      */
     String[] excludeTruncateTopics() default {};
 

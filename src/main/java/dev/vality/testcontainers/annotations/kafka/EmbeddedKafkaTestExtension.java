@@ -1,6 +1,6 @@
 package dev.vality.testcontainers.annotations.kafka;
 
-import lombok.SneakyThrows;
+import dev.vality.testcontainers.annotations.util.TestExecutionLock;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.RecordsToDelete;
@@ -15,7 +15,9 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class EmbeddedKafkaTestExtension implements BeforeEachCallback {
 
@@ -28,29 +30,42 @@ public class EmbeddedKafkaTestExtension implements BeforeEachCallback {
                 .ifPresent(annotation -> cleanupTopics(context, annotation));
     }
 
-    @SneakyThrows
     private void cleanupTopics(ExtensionContext context, EmbeddedKafkaTest annotation) {
+        var excludedTopics = Set.copyOf(Arrays.asList(annotation.excludeCleanupTopics()));
         var topics = Arrays.stream(annotation.topics())
-                .filter(topic -> !List.of(annotation.excludeCleanupTopics()).contains(topic))
+                .filter(topic -> !excludedTopics.contains(topic))
                 .toList();
         if (topics.isEmpty()) {
             return;
         }
 
-        var applicationContext = SpringExtension.getApplicationContext(context);
-        var embeddedKafkaBroker = applicationContext.getBean(EmbeddedKafkaBroker.class);
-        try (var adminClient = AdminClient.create(buildAdminProperties(embeddedKafkaBroker))) {
-            var existingTopics = adminClient.listTopics().names().get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            var missingTopics = topics.stream()
-                    .filter(topic -> !existingTopics.contains(topic))
-                    .toList();
-            if (!missingTopics.isEmpty()) {
-                embeddedKafkaBroker.addTopics(missingTopics.toArray(String[]::new));
+        TestExecutionLock.acquire(context);
+        try {
+            var applicationContext = SpringExtension.getApplicationContext(context);
+            var embeddedKafkaBroker = applicationContext.getBean(EmbeddedKafkaBroker.class);
+            try (var adminClient = AdminClient.create(buildAdminProperties(embeddedKafkaBroker))) {
+                var existingTopics = adminClient.listTopics().names().get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                var missingTopics = topics.stream()
+                        .filter(topic -> !existingTopics.contains(topic))
+                        .toList();
+                if (!missingTopics.isEmpty()) {
+                    embeddedKafkaBroker.addTopics(missingTopics.toArray(String[]::new));
+                }
+                var recordsToDelete = buildRecordsToDelete(embeddedKafkaBroker, topics);
+                if (!recordsToDelete.isEmpty()) {
+                    adminClient.deleteRecords(recordsToDelete).all().get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                }
             }
-            var recordsToDelete = buildRecordsToDelete(embeddedKafkaBroker, topics);
-            if (!recordsToDelete.isEmpty()) {
-                adminClient.deleteRecords(recordsToDelete).all().get(WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            TestExecutionLock.release(context);
+            throw new IllegalStateException("Interrupted while cleaning embedded Kafka topics", ex);
+        } catch (ExecutionException | TimeoutException ex) {
+            TestExecutionLock.release(context);
+            throw new IllegalStateException("Unable to clean embedded Kafka topics", ex);
+        } catch (RuntimeException ex) {
+            TestExecutionLock.release(context);
+            throw ex;
         }
     }
 

@@ -6,9 +6,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextCustomizer;
 import org.springframework.test.context.ContextCustomizerFactory;
+import org.springframework.test.context.MergedContextConfiguration;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class EmbeddedKafkaTestContextCustomizerFactory implements ContextCustomizerFactory {
 
@@ -16,20 +17,24 @@ public class EmbeddedKafkaTestContextCustomizerFactory implements ContextCustomi
     public ContextCustomizer createContextCustomizer(
             Class<?> testClass,
             List<ContextConfigurationAttributes> configAttributes) {
-        return (context, mergedConfig) ->
-                findAnnotation(testClass).ifPresent(annotation -> init(context, annotation));
+        return AnnotationSupport.findAnnotation(testClass, EmbeddedKafkaTest.class)
+                .<ContextCustomizer>map(annotation -> new EmbeddedKafkaContextCustomizer(
+                        List.copyOf(Arrays.asList(annotation.properties()))))
+                .orElse(null);
     }
 
-    private Optional<EmbeddedKafkaTest> findAnnotation(Class<?> testClass) {
-        return AnnotationSupport.findAnnotation(testClass, EmbeddedKafkaTest.class);
-    }
+    private record EmbeddedKafkaContextCustomizer(List<String> properties) implements ContextCustomizer {
 
-    private void init(ConfigurableApplicationContext context, EmbeddedKafkaTest annotation) {
-        TestPropertyValues.of(
-                        "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
-                        "kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
-                        "kafka.ssl.enabled=false")
-                .and(annotation.properties())
-                .applyTo(context);
+        @Override
+        public void customizeContext(
+                ConfigurableApplicationContext context,
+                MergedContextConfiguration mergedConfig) {
+            TestPropertyValues.of(
+                            "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+                            "kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+                            "kafka.ssl.enabled=false")
+                    .and(properties.toArray(String[]::new))
+                    .applyTo(context);
+        }
     }
 }

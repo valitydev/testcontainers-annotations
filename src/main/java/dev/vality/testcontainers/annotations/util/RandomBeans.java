@@ -15,98 +15,87 @@ import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RandomBeans {
 
     public static final long DEFAULT_SEED = 123L;
+    private static final Instant BASE_INSTANT = Instant.parse("2020-01-01T00:00:00Z");
+
 
     public static <T> T random(Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
-        var easyRandom = new EasyRandom(parameters);
-        return easyRandom.nextObject(type);
+        return random(DEFAULT_SEED, type, excludedFields);
     }
 
     public static <T> T random(Long seed, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(seed, excludedFields);
-        var easyRandom = new EasyRandom(parameters);
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(seed, excludedFields));
         return easyRandom.nextObject(type);
     }
 
     public static <T> List<T> randomListOf(int amount, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
-        var easyRandom = new EasyRandom(parameters);
-        return easyRandom.objects(type, amount).collect(Collectors.toList());
+        return randomListOf(DEFAULT_SEED, amount, type, excludedFields);
     }
 
     public static <T> List<T> randomListOf(Long seed, int amount, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(seed, excludedFields);
-        var easyRandom = new EasyRandom(parameters);
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(seed, excludedFields));
         return easyRandom.objects(type, amount).collect(Collectors.toList());
     }
 
     public static <T> Stream<T> randomStreamOf(int amount, Class<T> type, String... excludedFields) {
-        var parameters = createParametersWithExcludedFields(DEFAULT_SEED, excludedFields);
-        var easyRandom = new EasyRandom(parameters);
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(DEFAULT_SEED, excludedFields));
         return easyRandom.objects(type, amount);
     }
 
     @SneakyThrows
     public static <T extends TBase<?, ?>> T randomThrift(Class<T> type) {
-        var mockTBaseProcessor = new MockTBaseProcessor(MockMode.ALL, 25, 1);
+        return randomThrift(type, deterministicClock(DEFAULT_SEED), MockMode.ALL);
+    }
+
+    @SneakyThrows
+    public static <T extends TBase<?, ?>> T randomThrift(Class<T> type, Clock clock) {
+        return randomThrift(type, clock, MockMode.ALL);
+    }
+
+    @SneakyThrows
+    private static <T extends TBase<?, ?>> T randomThrift(
+            Class<T> type,
+            Clock clock,
+            MockMode mode) {
+        var mockTBaseProcessor = new MockTBaseProcessor(mode, 25, 1);
         mockTBaseProcessor.addFieldHandler(
-                structHandler -> structHandler.value(Instant.now().toString()),
+                structHandler -> structHandler.value(Instant.now(clock).toString()),
                 "created_at", "at", "due");
         return mockTBaseProcessor.process(type.getConstructor().newInstance(), new TBaseHandler<>(type));
     }
 
     @SneakyThrows
     public static <T extends TBase<?, ?>> T randomThriftOnlyRequiredFields(Class<T> type) {
-        var mockTBaseProcessor = new MockTBaseProcessor(MockMode.REQUIRED_ONLY, 25, 1);
-        mockTBaseProcessor.addFieldHandler(
-                structHandler -> structHandler.value(Instant.now().toString()),
-                "created_at", "at", "due");
-        return mockTBaseProcessor.process(type.getConstructor().newInstance(), new TBaseHandler<>(type));
+        return randomThrift(type, deterministicClock(DEFAULT_SEED), MockMode.REQUIRED_ONLY);
     }
 
     private static EasyRandomParameters createParametersWithExcludedFields(Long seed, String... excludedFields) {
+        if (seed == null) {
+            throw new IllegalArgumentException("Seed must not be null");
+        }
+        var clock = deterministicClock(seed);
+        var instant = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
+        var localDateTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         var parameters = new EasyRandomParameters();
-        parameters.randomize(LocalDateTime.class, () -> {
-            var dateTime = LocalDateTime.now();
-            return dateTime.truncatedTo(ChronoUnit.MICROS);
-        });
-        parameters.randomize(Instant.class, () -> {
-            var instant = Instant.now();
-            return instant.truncatedTo(ChronoUnit.MICROS);
-        });
-        parameters.randomize(Date.class, () -> {
-            var instant = Instant.now().truncatedTo(ChronoUnit.MICROS);
-            return Date.from(instant);
-        });
-        parameters.randomize(Timestamp.class, () -> {
-            var instant = Instant.now().truncatedTo(ChronoUnit.MICROS);
-            return Timestamp.from(instant);
-        });
-        parameters.randomize(OffsetDateTime.class, () -> {
-            var offsetDateTime = OffsetDateTime.now();
-            return offsetDateTime.truncatedTo(ChronoUnit.MICROS);
-        });
-        parameters.randomize(ZonedDateTime.class, () -> {
-            var zonedDateTime = ZonedDateTime.now();
-            return zonedDateTime.truncatedTo(ChronoUnit.MICROS);
-        });
+        parameters.randomize(LocalDateTime.class, () -> localDateTime);
+        parameters.randomize(Instant.class, () -> instant);
+        parameters.randomize(Date.class, () -> Date.from(instant));
+        parameters.randomize(Timestamp.class, () -> Timestamp.from(instant));
+        parameters.randomize(OffsetDateTime.class, () -> OffsetDateTime.ofInstant(instant, ZoneOffset.UTC));
+        parameters.randomize(ZonedDateTime.class, () -> ZonedDateTime.ofInstant(instant, ZoneOffset.UTC));
         parameters.randomize(Calendar.class, () -> {
-            var instant = Instant.now().truncatedTo(ChronoUnit.MICROS);
-            var calendar = Calendar.getInstance();
+            var calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
             calendar.setTime(Date.from(instant));
             return calendar;
         });
-        parameters.randomize(LocalDate.class, LocalDate::now);
-        parameters.randomize(LocalTime.class, () -> {
-            var time = LocalTime.now();
-            return time.truncatedTo(ChronoUnit.MICROS);
-        });
+        parameters.randomize(LocalDate.class, localDateTime::toLocalDate);
+        parameters.randomize(LocalTime.class, localDateTime::toLocalTime);
         if (excludedFields != null) {
             for (var excludedField : excludedFields) {
                 parameters.excludeField(field -> field.getName().equals(excludedField));
@@ -119,5 +108,11 @@ public class RandomBeans {
                 .stringLengthRange(5, 50)
                 .collectionSizeRange(1, 10);
         return parameters;
+    }
+
+    private static Clock deterministicClock(long seed) {
+        var secondsInTenYears = 3650L * 24 * 60 * 60;
+        var offsetSeconds = Math.floorMod(seed, secondsInTenYears);
+        return Clock.fixed(BASE_INSTANT.plusSeconds(offsetSeconds), ZoneOffset.UTC);
     }
 }

@@ -48,4 +48,14 @@ public @interface MinioTestcontainer {
      */
     String bucketName() default "test";
 
+    /**
+     * Очищать содержимое bucket перед каждым тестом.
+     */
+    boolean cleanupBucket() default true;
+
+    /**
+     * Префиксы объектов, которые не нужно удалять при очистке bucket.
+     */
+    String[] excludeCleanupPrefixes() default {};
+
 }

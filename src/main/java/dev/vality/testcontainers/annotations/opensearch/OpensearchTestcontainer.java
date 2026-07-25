@@ -20,4 +20,19 @@ public @interface OpensearchTestcontainer {
      */
     String[] properties() default {};
 
+    /**
+     * Удалять тестовые индексы перед каждым тестом.
+     */
+    boolean cleanupIndexes() default true;
+
+    /**
+     * Удалять только индексы с указанными префиксами. Пустой список означает все пользовательские индексы.
+     */
+    String[] indexPrefixes() default {};
+
+    /**
+     * Имена индексов, которые не нужно удалять. Системные индексы с точкой в начале исключаются всегда.
+     */
+    String[] excludeIndexes() default {};
+
 }
