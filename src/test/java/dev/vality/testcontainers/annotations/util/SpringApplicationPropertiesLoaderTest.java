@@ -38,10 +38,11 @@ class SpringApplicationPropertiesLoaderTest {
         Files.writeString(resources.resolve("application-review.properties"),
                 TOPIC_PROPERTY + "=profile-file-topic\n");
 
-        withResourceClassLoader(() -> assertThat(
+        var actual = withResourceClassLoader(() ->
                 SpringApplicationPropertiesLoader.loadFromSpringApplicationPropertiesFile(List.of(TOPIC_PROPERTY))
-                        .getProperty(TOPIC_PROPERTY))
-                .isEqualTo("profile-file-topic"));
+                        .getProperty(TOPIC_PROPERTY));
+
+        assertThat(actual).isEqualTo("profile-file-topic");
     }
 
     @Test
@@ -49,29 +50,30 @@ class SpringApplicationPropertiesLoaderTest {
         Files.writeString(resources.resolve("application.properties"), TOPIC_PROPERTY + "=file-topic\n");
         System.setProperty(TOPIC_PROPERTY, "system-topic");
         try {
-            withResourceClassLoader(() -> assertThat(
+            var actual = withResourceClassLoader(() ->
                     SpringApplicationPropertiesLoader.loadFromSpringApplicationPropertiesFile(List.of(TOPIC_PROPERTY))
-                            .getProperty(TOPIC_PROPERTY))
-                    .isEqualTo("system-topic"));
+                            .getProperty(TOPIC_PROPERTY));
+
+            assertThat(actual).isEqualTo("system-topic");
         } finally {
             System.clearProperty(TOPIC_PROPERTY);
         }
     }
 
-    private void withResourceClassLoader(ThrowingRunnable action) throws Exception {
+    private <T> T withResourceClassLoader(ThrowingSupplier<T> action) throws Exception {
         var thread = Thread.currentThread();
         var previous = thread.getContextClassLoader();
         try (var classLoader = new URLClassLoader(new java.net.URL[] {resources.toUri().toURL()}, previous)) {
             thread.setContextClassLoader(classLoader);
-            action.run();
+            return action.get();
         } finally {
             thread.setContextClassLoader(previous);
         }
     }
 
     @FunctionalInterface
-    private interface ThrowingRunnable {
+    private interface ThrowingSupplier<T> {
 
-        void run() throws Exception;
+        T get() throws Exception;
     }
 }

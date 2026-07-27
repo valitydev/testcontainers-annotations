@@ -16,6 +16,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,31 +27,36 @@ public class RandomBeans {
 
 
     public static <T> T random(Class<T> type, String... excludedFields) {
-        return random(DEFAULT_SEED, type, excludedFields);
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(
+                randomSeed(), Clock.systemUTC(), excludedFields));
+        return easyRandom.nextObject(type);
     }
 
     public static <T> T random(Long seed, Class<T> type, String... excludedFields) {
-        var easyRandom = new EasyRandom(createParametersWithExcludedFields(seed, excludedFields));
+        var easyRandom = new EasyRandom(createDeterministicParameters(seed, excludedFields));
         return easyRandom.nextObject(type);
     }
 
     public static <T> List<T> randomListOf(int amount, Class<T> type, String... excludedFields) {
-        return randomListOf(DEFAULT_SEED, amount, type, excludedFields);
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(
+                randomSeed(), Clock.systemUTC(), excludedFields));
+        return easyRandom.objects(type, amount).collect(Collectors.toList());
     }
 
     public static <T> List<T> randomListOf(Long seed, int amount, Class<T> type, String... excludedFields) {
-        var easyRandom = new EasyRandom(createParametersWithExcludedFields(seed, excludedFields));
+        var easyRandom = new EasyRandom(createDeterministicParameters(seed, excludedFields));
         return easyRandom.objects(type, amount).collect(Collectors.toList());
     }
 
     public static <T> Stream<T> randomStreamOf(int amount, Class<T> type, String... excludedFields) {
-        var easyRandom = new EasyRandom(createParametersWithExcludedFields(DEFAULT_SEED, excludedFields));
+        var easyRandom = new EasyRandom(createParametersWithExcludedFields(
+                randomSeed(), Clock.systemUTC(), excludedFields));
         return easyRandom.objects(type, amount);
     }
 
     @SneakyThrows
     public static <T extends TBase<?, ?>> T randomThrift(Class<T> type) {
-        return randomThrift(type, deterministicClock(DEFAULT_SEED), MockMode.ALL);
+        return randomThrift(type, Clock.systemUTC(), MockMode.ALL);
     }
 
     @SneakyThrows
@@ -72,14 +78,20 @@ public class RandomBeans {
 
     @SneakyThrows
     public static <T extends TBase<?, ?>> T randomThriftOnlyRequiredFields(Class<T> type) {
-        return randomThrift(type, deterministicClock(DEFAULT_SEED), MockMode.REQUIRED_ONLY);
+        return randomThrift(type, Clock.systemUTC(), MockMode.REQUIRED_ONLY);
     }
 
-    private static EasyRandomParameters createParametersWithExcludedFields(Long seed, String... excludedFields) {
+    private static EasyRandomParameters createDeterministicParameters(Long seed, String... excludedFields) {
         if (seed == null) {
             throw new IllegalArgumentException("Seed must not be null");
         }
-        var clock = deterministicClock(seed);
+        return createParametersWithExcludedFields(seed, deterministicClock(seed), excludedFields);
+    }
+
+    private static EasyRandomParameters createParametersWithExcludedFields(
+            Long seed,
+            Clock clock,
+            String... excludedFields) {
         var instant = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
         var localDateTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         var parameters = new EasyRandomParameters();
@@ -114,5 +126,9 @@ public class RandomBeans {
         var secondsInTenYears = 3650L * 24 * 60 * 60;
         var offsetSeconds = Math.floorMod(seed, secondsInTenYears);
         return Clock.fixed(BASE_INSTANT.plusSeconds(offsetSeconds), ZoneOffset.UTC);
+    }
+
+    private static long randomSeed() {
+        return ThreadLocalRandom.current().nextLong();
     }
 }

@@ -10,6 +10,7 @@ rel/example_project
 .concrete/DEV_MODE
 .rebar
 target/
+usage/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
